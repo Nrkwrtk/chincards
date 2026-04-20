@@ -10,9 +10,20 @@ async function loadDictionary() {
   try {
     const response = await fetch('hsk.json');
     fullDictionary = await response.json();
+    
+    // Подсчёт слов по уровням
+    const totalWords = fullDictionary.length;
+    const hsk1Words = fullDictionary.filter(w => w.level == 1).length;
+    const hsk2Words = fullDictionary.filter(w => w.level == 2).length;
+    const hsk3Words = fullDictionary.filter(w => w.level == 3).length;
+    
+    // Всплывающее окно с информацией
+    alert(`Загружено слов всего: ${totalWords}\nHSK1: ${hsk1Words}\nHSK2: ${hsk2Words}\nHSK3: ${hsk3Words}`);
+    
     initForLevel(activeLevel);
   } catch (err) {
     console.error('Ошибка загрузки hsk.json', err);
+    alert('Ошибка загрузки hsk.json! Проверьте, что файл есть в корне репозитория');
     fullDictionary = [
       { hanzi: "爱", level: 1, pinyin: "ài", translations: { rus: ["любовь", "любить"] } },
       { hanzi: "八", level: 1, pinyin: "bā", translations: { rus: ["восемь"] } }
@@ -22,7 +33,7 @@ async function loadDictionary() {
 }
 
 function initForLevel(level) {
-  const levelWords = fullDictionary.filter(w => w.level === level);
+  const levelWords = fullDictionary.filter(w => w.level == level);
   if (levelWords.length === 0) {
     rotationQueue = [];
     currentCardIndex = 0;
