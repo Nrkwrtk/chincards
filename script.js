@@ -1,55 +1,73 @@
 let fullDictionary = [];
 let activeLevel = 1;
-let rotationQueue = [];
+let learnedIds = new Set(); // Храним ID выученных слов (глобально для всех уровней)
+
+let currentCard = null;
+let currentLevelWords = [];   // Слова текущего уровня, которые ещё НЕ выучены
 let currentCardIndex = 0;
 let isFlipped = false;
 let touchStartX = 0;
 let isSwiping = false;
 
+// Загрузка словаря
 async function loadDictionary() {
   try {
     const response = await fetch('hsk.json');
     fullDictionary = await response.json();
+    
+    // Загружаем сохранённые выученные слова из localStorage
+    const saved = localStorage.getItem('chincards_learned');
+    if (saved) {
+      learnedIds = new Set(JSON.parse(saved));
+    }
     
     // Подсчёт слов по уровням
     const totalWords = fullDictionary.length;
     const hsk1Words = fullDictionary.filter(w => w.level == 1).length;
     const hsk2Words = fullDictionary.filter(w => w.level == 2).length;
     const hsk3Words = fullDictionary.filter(w => w.level == 3).length;
+    const hsk4Words = fullDictionary.filter(w => w.level == 4).length;
+    const hsk5Words = fullDictionary.filter(w => w.level == 5).length;
+    const hsk6Words = fullDictionary.filter(w => w.level == 6).length;
     
-    // Всплывающее окно с информацией
-    alert(`Загружено слов всего: ${totalWords}\nHSK1: ${hsk1Words}\nHSK2: ${hsk2Words}\nHSK3: ${hsk3Words}`);
+    console.log(`Загружено: всего ${totalWords}, HSK1:${hsk1Words}, HSK2:${hsk2Words}, HSK3:${hsk3Words}, HSK4:${hsk4Words}, HSK5:${hsk5Words}, HSK6:${hsk6Words}`);
     
     initForLevel(activeLevel);
   } catch (err) {
     console.error('Ошибка загрузки hsk.json', err);
     alert('Ошибка загрузки hsk.json! Проверьте, что файл есть в корне репозитория');
-    fullDictionary = [
-      { hanzi: "爱", level: 1, pinyin: "ài", translations: { rus: ["любовь", "любить"] } },
-      { hanzi: "八", level: 1, pinyin: "bā", translations: { rus: ["восемь"] } }
-    ];
-    initForLevel(1);
   }
 }
 
+// Инициализация для уровня (показываем только НЕвыученные слова)
 function initForLevel(level) {
-  const levelWords = fullDictionary.filter(w => w.level == level);
-  if (levelWords.length === 0) {
-    rotationQueue = [];
-    currentCardIndex = 0;
+  // Все слова этого уровня
+  const allLevelWords = fullDictionary.filter(w => w.level == level);
+  
+  // Оставляем только те, которые ещё не выучены (ID нет в learnedIds)
+  currentLevelWords = allLevelWords.filter(w => !learnedIds.has(w.id));
+  
+  if (currentLevelWords.length === 0) {
+    currentCard = null;
     updateCardDisplay();
     updateStats();
     return;
   }
-  rotationQueue = shuffleArray([...levelWords]);
+  
+  // Перемешиваем
+  currentLevelWords = shuffleArray([...currentLevelWords]);
   currentCardIndex = 0;
+  currentCard = currentLevelWords[currentCardIndex];
   isFlipped = false;
+  
   const cardEl = document.getElementById('flashcard');
   if (cardEl) cardEl.classList.remove('flipped');
+  
   updateCardDisplay();
   updateStats();
 }
 
+// Перемешивание
 function shuffleArray(arr) {
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -58,6 +76,7 @@ function shuffleArray(arr) {
   return arr;
 }
 
+// Получение русского перевода
 function getRussianTranslation(word) {
   if (!word.translations || !word.translations.rus) {
     return ["(нет перевода)", []];
@@ -69,8 +88,9 @@ function getRussianTranslation(word) {
   return [main, extra];
 }
 
+// Обновление карточки
 function updateCardDisplay() {
-  if (rotationQueue.length === 0 || currentCardIndex >= rotationQueue.length) {
+  if (!currentCard) {
     document.getElementById('chineseChar').innerText = '🎉';
     document.getElementById('pinyin').innerHTML = '';
     document.getElementById('meaning').innerHTML = 'Все слова выучены!';
@@ -78,11 +98,11 @@ function updateCardDisplay() {
     if (extraEl) extraEl.innerHTML = '';
     return;
   }
-  const word = rotationQueue[currentCardIndex];
-  document.getElementById('chineseChar').innerText = word.hanzi;
-  document.getElementById('pinyin').innerHTML = word.pinyin;
   
-  const [mainMeaning, extraMeanings] = getRussianTranslation(word);
+  document.getElementById('chineseChar').innerText = currentCard.hanzi;
+  document.getElementById('pinyin').innerHTML = currentCard.pinyin;
+  
+  const [mainMeaning, extraMeanings] = getRussianTranslation(currentCard);
   document.getElementById('meaning').innerHTML = mainMeaning;
   
   const extraEl = document.getElementById('extraMeanings');
@@ -95,10 +115,13 @@ function updateCardDisplay() {
   }
 }
 
+// Обновление счётчика (только невыученные слова текущего уровня)
 function updateStats() {
-  document.getElementById('cardsLeft').innerText = rotationQueue.length;
+  const leftCount = currentLevelWords.length;
+  document.getElementById('cardsLeft').innerText = leftCount;
 }
 
+// Озвучивание
 function speakWord(hanzi) {
   if (!window.speechSynthesis) return;
   const utterance = new SpeechSynthesisUtterance(hanzi);
@@ -108,37 +131,54 @@ function speakWord(hanzi) {
   window.speechSynthesis.speak(utterance);
 }
 
+// Переворот карточки
 function flipCard() {
+  if (!currentCard) return;
   const card = document.getElementById('flashcard');
-  if (!rotationQueue.length) return;
   isFlipped = !isFlipped;
   if (isFlipped) {
     card.classList.add('flipped');
-    const currentWord = rotationQueue[currentCardIndex];
-    speakWord(currentWord.hanzi);
+    speakWord(currentCard.hanzi);
   } else {
     card.classList.remove('flipped');
   }
 }
 
+// Свайп влево (не знаю → оставляем, перемещаем в конец очереди)
 function swipeLeft() {
-  if (rotationQueue.length <= 1) return;
-  const currentWord = rotationQueue[currentCardIndex];
-  rotationQueue.splice(currentCardIndex, 1);
-  rotationQueue.push(currentWord);
-  if (currentCardIndex >= rotationQueue.length) currentCardIndex = 0;
+  if (!currentCard || currentLevelWords.length <= 1) return;
+  
+  // Перемещаем текущее слово в конец
+  currentLevelWords.splice(currentCardIndex, 1);
+  currentLevelWords.push(currentCard);
+  
+  if (currentCardIndex >= currentLevelWords.length) currentCardIndex = 0;
+  currentCard = currentLevelWords[currentCardIndex];
+  
   isFlipped = false;
   const card = document.getElementById('flashcard');
   card.classList.remove('flipped');
+  
   updateCardDisplay();
   updateStats();
   animateSwipe('left');
 }
 
+// Свайп вправо (знаю → удаляем из ротации и запоминаем как выученное)
 function swipeRight() {
-  if (rotationQueue.length === 0) return;
-  rotationQueue.splice(currentCardIndex, 1);
-  if (rotationQueue.length === 0) {
+  if (!currentCard) return;
+  
+  // Добавляем ID слова в выученные
+  learnedIds.add(currentCard.id);
+  
+  // Удаляем слово из текущего массива
+  currentLevelWords.splice(currentCardIndex, 1);
+  
+  // Сохраняем выученные слова в localStorage
+  localStorage.setItem('chincards_learned', JSON.stringify([...learnedIds]));
+  
+  if (currentLevelWords.length === 0) {
+    currentCard = null;
     currentCardIndex = 0;
     isFlipped = false;
     document.getElementById('flashcard').classList.remove('flipped');
@@ -147,9 +187,12 @@ function swipeRight() {
     animateSwipe('right');
     return;
   }
-  if (currentCardIndex >= rotationQueue.length) currentCardIndex = 0;
+  
+  if (currentCardIndex >= currentLevelWords.length) currentCardIndex = 0;
+  currentCard = currentLevelWords[currentCardIndex];
   isFlipped = false;
   document.getElementById('flashcard').classList.remove('flipped');
+  
   updateCardDisplay();
   updateStats();
   animateSwipe('right');
@@ -164,6 +207,7 @@ function animateSwipe(direction) {
   }, 300);
 }
 
+// Обработчики касаний
 function attachTouchEvents() {
   const container = document.querySelector('.card-container');
   if (!container) return;
@@ -205,6 +249,7 @@ function attachTouchEvents() {
   });
 }
 
+// Переключение уровня
 function setupLevelSwitcher() {
   const btns = document.querySelectorAll('.level-btn');
   btns.forEach(btn => {
@@ -219,6 +264,7 @@ function setupLevelSwitcher() {
   });
 }
 
+// Инициализация речи
 function initSpeech() {
   if (window.speechSynthesis) {
     const dummy = new SpeechSynthesisUtterance('');
@@ -226,6 +272,7 @@ function initSpeech() {
   }
 }
 
+// Запуск
 document.addEventListener('DOMContentLoaded', () => {
   loadDictionary();
   setupLevelSwitcher();
