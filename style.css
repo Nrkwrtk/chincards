@@ -13,48 +13,53 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 20px;
-  touch-action: pan-x pan-y;
+  padding: 16px;
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+  height: 100%;
 }
 
 .app {
   max-width: 500px;
   width: 100%;
   margin: 0 auto;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30px;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 12px;
+  margin-bottom: 20px;
   background: rgba(0,0,0,0.3);
-  padding: 12px 18px;
-  border-radius: 40px;
+  padding: 12px 16px;
+  border-radius: 28px;
   backdrop-filter: blur(10px);
 }
 
 .level-switch {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 8px;
-  background: rgba(255,255,255,0.1);
-  padding: 4px;
-  border-radius: 40px;
 }
 
 .level-btn {
-  background: transparent;
+  background: rgba(255,255,255,0.15);
   border: none;
-  padding: 8px 20px;
-  border-radius: 40px;
-  font-size: 15px;
+  padding: 8px 14px;
+  border-radius: 30px;
+  font-size: 14px;
   font-weight: 600;
   color: white;
-  opacity: 0.6;
+  opacity: 0.7;
   transition: all 0.2s ease;
   cursor: pointer;
+  flex: 0 0 auto;
 }
 
 .level-btn.active {
@@ -69,11 +74,18 @@ body {
   background: rgba(0,0,0,0.4);
   padding: 6px 14px;
   border-radius: 30px;
+  text-align: center;
+  align-self: center;
 }
 
 .card-container {
   perspective: 1200px;
-  margin: 20px 0;
+  margin: 10px 0;
+  touch-action: none;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  min-height: 0;
 }
 
 .card {
@@ -119,48 +131,34 @@ body {
 }
 
 .chinese-char {
-  font-size: clamp(3rem, 15vw, 6rem);
+  font-size: clamp(2.5rem, 12vw, 5rem);
   font-weight: 600;
   color: #2c3e4e;
   line-height: 1.2;
+  word-break: break-word;
 }
 
 .pinyin {
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: 500;
   color: #e67e22;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .meaning {
-  font-size: 1.6rem;
+  font-size: 1.3rem;
   color: #2c3e4e;
   background: rgba(230,126,34,0.1);
-  padding: 12px 20px;
-  border-radius: 60px;
-  margin-bottom: 12px;
+  padding: 10px 18px;
+  border-radius: 40px;
+  margin-bottom: 10px;
 }
 
 .extra-meanings {
-  font-size: 1rem;
+  font-size: 0.9rem;
   color: #555;
   margin-top: 8px;
-  line-height: 1.4;
-}
-
-.instructions {
-  margin-top: 30px;
-  text-align: center;
-  color: rgba(255,255,255,0.7);
-  font-size: 13px;
-  background: rgba(0,0,0,0.3);
-  padding: 12px;
-  border-radius: 50px;
-  backdrop-filter: blur(5px);
-}
-
-.swipe-hint, .tap-hint {
-  margin: 4px 0;
+  line-height: 1.3;
 }
 
 .card-container.swipe-left .card {
@@ -173,4 +171,14 @@ body {
   transform: translateX(120%) rotate(15deg);
   opacity: 0;
   transition: transform 0.3s ease, opacity 0.2s;
+}
+
+/* Запрещаем скролл страницы */
+body {
+  overflow: hidden;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
 }
