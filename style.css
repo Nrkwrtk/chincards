@@ -1,0 +1,176 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background: linear-gradient(135deg, #1e2a3a, #0f1724);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  touch-action: pan-x pan-y;
+}
+
+.app {
+  max-width: 500px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+  gap: 12px;
+  background: rgba(0,0,0,0.3);
+  padding: 12px 18px;
+  border-radius: 40px;
+  backdrop-filter: blur(10px);
+}
+
+.level-switch {
+  display: flex;
+  gap: 8px;
+  background: rgba(255,255,255,0.1);
+  padding: 4px;
+  border-radius: 40px;
+}
+
+.level-btn {
+  background: transparent;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 40px;
+  font-size: 15px;
+  font-weight: 600;
+  color: white;
+  opacity: 0.6;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.level-btn.active {
+  background: #ff9f4a;
+  opacity: 1;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.stats {
+  color: white;
+  font-size: 14px;
+  background: rgba(0,0,0,0.4);
+  padding: 6px 14px;
+  border-radius: 30px;
+}
+
+.card-container {
+  perspective: 1200px;
+  margin: 20px 0;
+}
+
+.card {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+  cursor: pointer;
+  border-radius: 32px;
+  box-shadow: 0 20px 35px -10px rgba(0,0,0,0.4);
+}
+
+.card.flipped {
+  transform: rotateY(180deg);
+}
+
+.card-front, .card-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: 32px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 24px;
+  background: white;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+}
+
+.card-front {
+  background: linear-gradient(145deg, #fff9f0, #fff1e0);
+  transform: rotateY(0deg);
+}
+
+.card-back {
+  background: linear-gradient(145deg, #f0f7ff, #e9f0fa);
+  transform: rotateY(180deg);
+  overflow-y: auto;
+}
+
+.chinese-char {
+  font-size: clamp(3rem, 15vw, 6rem);
+  font-weight: 600;
+  color: #2c3e4e;
+  line-height: 1.2;
+}
+
+.pinyin {
+  font-size: 2rem;
+  font-weight: 500;
+  color: #e67e22;
+  margin-bottom: 20px;
+}
+
+.meaning {
+  font-size: 1.6rem;
+  color: #2c3e4e;
+  background: rgba(230,126,34,0.1);
+  padding: 12px 20px;
+  border-radius: 60px;
+  margin-bottom: 12px;
+}
+
+.extra-meanings {
+  font-size: 1rem;
+  color: #555;
+  margin-top: 8px;
+  line-height: 1.4;
+}
+
+.instructions {
+  margin-top: 30px;
+  text-align: center;
+  color: rgba(255,255,255,0.7);
+  font-size: 13px;
+  background: rgba(0,0,0,0.3);
+  padding: 12px;
+  border-radius: 50px;
+  backdrop-filter: blur(5px);
+}
+
+.swipe-hint, .tap-hint {
+  margin: 4px 0;
+}
+
+.card-container.swipe-left .card {
+  transform: translateX(-120%) rotate(-15deg);
+  opacity: 0;
+  transition: transform 0.3s ease, opacity 0.2s;
+}
+
+.card-container.swipe-right .card {
+  transform: translateX(120%) rotate(15deg);
+  opacity: 0;
+  transition: transform 0.3s ease, opacity 0.2s;
+}
