@@ -1,0 +1,26 @@
+[
+    {
+        "hanzi": "爱",
+        "id": 1,
+        "level": 1,
+        "pinyin": "ài",
+        "radicals": "爫",
+        "strokes": "10",
+        "translations": {
+            "eng": ["to love", "affection"],
+            "rus": ["любовь", "любить"]
+        }
+    },
+    {
+        "hanzi": "八",
+        "id": 2,
+        "level": 1,
+        "pinyin": "bā",
+        "radicals": "八",
+        "strokes": "2",
+        "translations": {
+            "eng": ["eight"],
+            "rus": ["восемь"]
+        }
+    }
+]
