@@ -207,32 +207,38 @@ function animateSwipe(direction) {
   }, 300);
 }
 
-// Обработчики касаний
+// Обработчики касаний (исправлено для iPhone)
 function attachTouchEvents() {
   const container = document.querySelector('.card-container');
   if (!container) return;
   
+  // Предотвращаем скролл страницы при касании карточки
   container.addEventListener('touchstart', (e) => {
     touchStartX = e.touches[0].clientX;
     isSwiping = true;
-  });
+    // Запрещаем браузеру скроллить
+    e.preventDefault();
+  }, { passive: false });
   
   container.addEventListener('touchmove', (e) => {
     if (!isSwiping) return;
     const deltaX = e.touches[0].clientX - touchStartX;
-    if (Math.abs(deltaX) > 30) e.preventDefault();
-  });
+    if (Math.abs(deltaX) > 10) {
+      e.preventDefault();
+    }
+  }, { passive: false });
   
   container.addEventListener('touchend', (e) => {
     if (!isSwiping) return;
     const deltaX = e.changedTouches[0].clientX - touchStartX;
-    if (Math.abs(deltaX) > 60) {
+    if (Math.abs(deltaX) > 50) {
       if (deltaX > 0) swipeRight();
       else swipeLeft();
     }
     isSwiping = false;
   });
   
+  // Для мыши (тестирование на Mac)
   let mouseStartX = 0;
   container.addEventListener('mousedown', (e) => {
     mouseStartX = e.clientX;
@@ -241,7 +247,7 @@ function attachTouchEvents() {
   container.addEventListener('mouseup', (e) => {
     if (!isSwiping) return;
     const deltaX = e.clientX - mouseStartX;
-    if (Math.abs(deltaX) > 60) {
+    if (Math.abs(deltaX) > 50) {
       if (deltaX > 0) swipeRight();
       else swipeLeft();
     }
