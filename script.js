@@ -33,7 +33,7 @@ function initForLevel(level) {
   const allLevelWords = fullDictionary.filter(w => w.level == level);
   currentLevelWords = allLevelWords.filter(w => !learnedIds.has(w.id));
   
-  updateStats(); // Обновляем счётчики ДО отображения карточки
+  updateStats();
   
   if (currentLevelWords.length === 0) {
     currentCard = null;
@@ -93,7 +93,6 @@ function updateCardDisplay() {
   const extraEl = document.getElementById('extraMeanings');
   if (extraEl) {
     if (extraMeanings.length > 0) {
-      // Ограничиваем количество дополнительных переводов для компактности
       const displayMeanings = extraMeanings.slice(0, 3);
       extraEl.innerHTML = displayMeanings.map(m => `• ${m}`).join('<br>');
       if (extraMeanings.length > 3) {
@@ -105,7 +104,7 @@ function updateCardDisplay() {
   }
 }
 
-// Обновление счётчиков (осталось + выучено)
+// Обновление счётчиков
 function updateStats() {
   const allCurrentLevelWords = fullDictionary.filter(w => w.level == activeLevel);
   const totalInLevel = allCurrentLevelWords.length;
@@ -139,7 +138,7 @@ function flipCard() {
   }
 }
 
-// Свайп влево (не знаю → в конец)
+// Свайп влево (не знаю)
 function swipeLeft() {
   if (!currentCard || currentLevelWords.length <= 1) return;
   
@@ -158,7 +157,7 @@ function swipeLeft() {
   animateSwipe('left');
 }
 
-// Свайп вправо (знаю → удаляем)
+// Свайп вправо (знаю)
 function swipeRight() {
   if (!currentCard) return;
   
@@ -196,7 +195,7 @@ function animateSwipe(direction) {
   }, 300);
 }
 
-// Обработчики касаний для свайпов
+// Обработчики касаний
 function attachTouchEvents() {
   const container = document.querySelector('.card-container');
   if (!container) return;
