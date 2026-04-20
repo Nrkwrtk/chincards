@@ -9,6 +9,7 @@ let isFlipped = false;
 let touchStartX = 0;
 let isSwiping = false;
 
+// Загрузка словаря
 async function loadDictionary() {
   try {
     const response = await fetch('hsk.json');
@@ -19,16 +20,7 @@ async function loadDictionary() {
       learnedIds = new Set(JSON.parse(saved));
     }
     
-    const totalWords = fullDictionary.length;
-    const hsk1Words = fullDictionary.filter(w => w.level == 1).length;
-    const hsk2Words = fullDictionary.filter(w => w.level == 2).length;
-    const hsk3Words = fullDictionary.filter(w => w.level == 3).length;
-    const hsk4Words = fullDictionary.filter(w => w.level == 4).length;
-    const hsk5Words = fullDictionary.filter(w => w.level == 5).length;
-    const hsk6Words = fullDictionary.filter(w => w.level == 6).length;
-    
-    console.log(`Загружено: всего ${totalWords}, HSK1:${hsk1Words}, HSK2:${hsk2Words}, HSK3:${hsk3Words}, HSK4:${hsk4Words}, HSK5:${hsk5Words}, HSK6:${hsk6Words}`);
-    
+    console.log(`Загружено слов: ${fullDictionary.length}`);
     initForLevel(activeLevel);
   } catch (err) {
     console.error('Ошибка загрузки hsk.json', err);
@@ -36,14 +28,16 @@ async function loadDictionary() {
   }
 }
 
+// Инициализация для уровня
 function initForLevel(level) {
   const allLevelWords = fullDictionary.filter(w => w.level == level);
   currentLevelWords = allLevelWords.filter(w => !learnedIds.has(w.id));
   
+  updateStats(); // Обновляем счётчики ДО отображения карточки
+  
   if (currentLevelWords.length === 0) {
     currentCard = null;
     updateCardDisplay();
-    updateStats();
     return;
   }
   
@@ -56,9 +50,9 @@ function initForLevel(level) {
   if (cardEl) cardEl.classList.remove('flipped');
   
   updateCardDisplay();
-  updateStats();
 }
 
+// Перемешивание
 function shuffleArray(arr) {
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -67,6 +61,7 @@ function shuffleArray(arr) {
   return arr;
 }
 
+// Получение русского перевода
 function getRussianTranslation(word) {
   if (!word.translations || !word.translations.rus) {
     return ["(нет перевода)", []];
@@ -78,6 +73,7 @@ function getRussianTranslation(word) {
   return [main, extra];
 }
 
+// Обновление карточки
 function updateCardDisplay() {
   if (!currentCard) {
     document.getElementById('chineseChar').innerText = '🎉';
@@ -97,18 +93,30 @@ function updateCardDisplay() {
   const extraEl = document.getElementById('extraMeanings');
   if (extraEl) {
     if (extraMeanings.length > 0) {
-      extraEl.innerHTML = extraMeanings.map(m => `• ${m}`).join('<br>');
+      // Ограничиваем количество дополнительных переводов для компактности
+      const displayMeanings = extraMeanings.slice(0, 3);
+      extraEl.innerHTML = displayMeanings.map(m => `• ${m}`).join('<br>');
+      if (extraMeanings.length > 3) {
+        extraEl.innerHTML += '<br>• ...';
+      }
     } else {
       extraEl.innerHTML = '';
     }
   }
 }
 
+// Обновление счётчиков (осталось + выучено)
 function updateStats() {
-  const leftCount = currentLevelWords.length;
-  document.getElementById('cardsLeft').innerText = leftCount;
+  const allCurrentLevelWords = fullDictionary.filter(w => w.level == activeLevel);
+  const totalInLevel = allCurrentLevelWords.length;
+  const learnedInLevel = allCurrentLevelWords.filter(w => learnedIds.has(w.id)).length;
+  const leftInLevel = totalInLevel - learnedInLevel;
+  
+  document.getElementById('cardsLeft').innerText = leftInLevel;
+  document.getElementById('learnedCount').innerText = learnedInLevel;
 }
 
+// Озвучивание
 function speakWord(hanzi) {
   if (!window.speechSynthesis) return;
   const utterance = new SpeechSynthesisUtterance(hanzi);
@@ -118,7 +126,7 @@ function speakWord(hanzi) {
   window.speechSynthesis.speak(utterance);
 }
 
-// ПЕРЕВОРОТ: используем обычный click (он работает в PWA без проблем)
+// Переворот карточки
 function flipCard() {
   if (!currentCard) return;
   const card = document.getElementById('flashcard');
@@ -131,6 +139,7 @@ function flipCard() {
   }
 }
 
+// Свайп влево (не знаю → в конец)
 function swipeLeft() {
   if (!currentCard || currentLevelWords.length <= 1) return;
   
@@ -149,6 +158,7 @@ function swipeLeft() {
   animateSwipe('left');
 }
 
+// Свайп вправо (знаю → удаляем)
 function swipeRight() {
   if (!currentCard) return;
   
@@ -186,17 +196,14 @@ function animateSwipe(direction) {
   }, 300);
 }
 
-// Исправленные обработчики для PWA
+// Обработчики касаний для свайпов
 function attachTouchEvents() {
   const container = document.querySelector('.card-container');
   if (!container) return;
   
-  // Используем touchstart с setTimeout для обхода бага WebKit
   container.addEventListener('touchstart', (e) => {
     touchStartX = e.touches[0].clientX;
     isSwiping = true;
-    // Небольшая задержка для обхода бага PWA [citation:7]
-    setTimeout(() => {}, 10);
   }, { passive: false });
   
   container.addEventListener('touchmove', (e) => {
@@ -217,7 +224,6 @@ function attachTouchEvents() {
     isSwiping = false;
   });
   
-  // Для мыши (тестирование)
   let mouseStartX = 0;
   container.addEventListener('mousedown', (e) => {
     mouseStartX = e.clientX;
@@ -234,6 +240,7 @@ function attachTouchEvents() {
   });
 }
 
+// Переключение уровня
 function setupLevelSwitcher() {
   const btns = document.querySelectorAll('.level-btn');
   btns.forEach(btn => {
@@ -248,6 +255,7 @@ function setupLevelSwitcher() {
   });
 }
 
+// Инициализация речи
 function initSpeech() {
   if (window.speechSynthesis) {
     const dummy = new SpeechSynthesisUtterance('');
@@ -255,6 +263,7 @@ function initSpeech() {
   }
 }
 
+// Запуск
 document.addEventListener('DOMContentLoaded', () => {
   loadDictionary();
   setupLevelSwitcher();
@@ -263,7 +272,6 @@ document.addEventListener('DOMContentLoaded', () => {
   
   const card = document.getElementById('flashcard');
   if (card) {
-    // Используем click вместо touchstart для переворота — он стабильнее в PWA
     card.addEventListener('click', (e) => {
       e.stopPropagation();
       flipCard();
