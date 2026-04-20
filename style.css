@@ -8,7 +8,7 @@
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  background: linear-gradient(135deg, #1e2a3a, #0f1724);
+  background: linear-gradient(135deg, #0a0a0a, #1a1a2e);
   min-height: 100vh;
   display: flex;
   justify-content: center;
@@ -35,19 +35,19 @@ body {
   align-items: center;
 }
 
-/* Тёмная плашка сверху — теперь такой же ширины как карточка */
+/* Тёмная плашка сверху */
 .header {
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(20px);
   border-radius: 28px;
   padding: 14px 18px;
   margin-bottom: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   width: 92%;
   max-width: 360px;
 }
 
-/* Строка с HSK и кнопками — без фона, просто в ряд */
+/* Строка с HSK и кнопками */
 .level-row {
   display: flex;
   align-items: center;
@@ -72,7 +72,7 @@ body {
 
 /* Кнопки уровней */
 .level-btn {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.1);
   border: none;
   width: 36px;
   height: 36px;
@@ -92,7 +92,7 @@ body {
   box-shadow: 0 2px 8px rgba(255, 111, 44, 0.25);
 }
 
-/* Статистика — два счётчика */
+/* Статистика */
 .stats-container {
   display: flex;
   gap: 12px;
@@ -101,7 +101,7 @@ body {
 
 .stat-card {
   flex: 1;
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.4);
   border-radius: 20px;
   padding: 8px 12px;
   text-align: center;
@@ -145,7 +145,7 @@ body {
   transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
   cursor: pointer;
   border-radius: 32px;
-  box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.5);
   margin: 0 auto;
 }
 
@@ -153,20 +153,20 @@ body {
   transform: rotateY(180deg);
 }
 
-/* Общий стиль для обеих сторон */
+/* Общий стиль для обеих сторон — тёмный */
 .card-front, .card-back {
   position: absolute;
   width: 100%;
   height: 100%;
   backface-visibility: hidden;
   border-radius: 32px;
-  background: white;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  background: linear-gradient(145deg, #1e1e2f, #2a2a3e);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
 }
 
 /* Лицевая сторона */
 .card-front {
-  background: linear-gradient(145deg, #fff9f0, #fff1e0);
+  background: linear-gradient(145deg, #1a1a2a, #252540);
   transform: rotateY(0deg);
   display: flex;
   flex-direction: column;
@@ -178,7 +178,7 @@ body {
 
 /* Оборотная сторона */
 .card-back {
-  background: linear-gradient(145deg, #f0f7ff, #e9f0fa);
+  background: linear-gradient(145deg, #1e1e30, #282844);
   transform: rotateY(180deg);
   display: flex;
   flex-direction: column;
@@ -198,32 +198,33 @@ body {
   justify-content: center;
 }
 
-/* Иероглиф */
+/* Иероглиф — светлый */
 .chinese-char {
   font-size: clamp(2.5rem, 10vw, 4.5rem);
   font-weight: 600;
-  color: #2c3e4e;
+  color: #f0f0f0;
   line-height: 1.2;
   word-break: break-word;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 /* Пиньинь */
 .pinyin {
   font-size: 1.5rem;
   font-weight: 600;
-  color: #e67e22;
+  color: #ffaa66;
   margin-bottom: 16px;
   text-align: center;
   word-break: break-word;
   padding: 0 8px;
 }
 
-/* Основной перевод */
+/* Основной перевод — светлый текст на тёмном фоне */
 .meaning {
   font-size: 1.25rem;
   font-weight: 500;
-  color: #2c3e4e;
-  background: rgba(230, 126, 34, 0.12);
+  color: #e0e0e0;
+  background: rgba(255, 255, 255, 0.08);
   padding: 10px 16px;
   border-radius: 40px;
   margin-bottom: 10px;
@@ -237,7 +238,7 @@ body {
 /* Дополнительные переводы */
 .extra-meanings {
   font-size: 0.85rem;
-  color: #666;
+  color: #aaa;
   margin-top: 6px;
   line-height: 1.35;
   max-width: 95%;
