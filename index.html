@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>ChinCards</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ChinCards">
+  <link rel="apple-touch-icon" href="https://emojicdn.elk.sh/🀆?style=twitter">
+</head>
+<body>
+  <div class="app">
+    <div class="header">
+      <div class="level-switch">
+        <button data-level="1" class="level-btn active">HSK 1</button>
+        <button data-level="2" class="level-btn">HSK 2</button>
+        <button data-level="3" class="level-btn">HSK 3</button>
+      </div>
+      <div class="stats">
+        <span id="cardsLeft">0</span> слов в ротации
+      </div>
+    </div>
+
+    <div class="card-container">
+      <div class="card" id="flashcard">
+        <div class="card-front">
+          <div class="chinese-char" id="chineseChar"></div>
+        </div>
+        <div class="card-back">
+          <div class="pinyin" id="pinyin"></div>
+          <div class="meaning" id="meaning"></div>
+          <div class="extra-meanings" id="extraMeanings"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="instructions">
+      <div class="swipe-hint">⬅️ Не знаю (оставить) &nbsp;&nbsp;&nbsp; Знаю ➡️</div>
+      <div class="tap-hint">👆 Тап — перевернуть</div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
