@@ -165,7 +165,7 @@ body {
   backface-visibility: hidden;
   border-radius: 32px;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-  transition: background 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 /* Лицевая сторона - обычное состояние */
@@ -202,6 +202,28 @@ body {
   border: 2px solid #ff5555;
 }
 
+/* Фразовая карточка - голубая рамка */
+.card-front.phrase-card {
+  border: 3px solid #44aaff;
+  box-shadow: 0 0 15px rgba(68, 170, 255, 0.3);
+}
+
+.card-back.phrase-card {
+  border: 3px solid #44aaff;
+  box-shadow: 0 0 15px rgba(68, 170, 255, 0.3);
+}
+
+/* Комбинация фразовой и цветных статусов */
+.card-front.phrase-card.yellow-card {
+  border: 3px solid #ffaa33;
+  box-shadow: 0 0 15px rgba(255, 170, 51, 0.3);
+}
+
+.card-front.phrase-card.red-card {
+  border: 3px solid #ff5555;
+  box-shadow: 0 0 15px rgba(255, 85, 85, 0.3);
+}
+
 /* Оборотная сторона */
 .card-back {
   background: linear-gradient(145deg, #1e1e30, #282844);
@@ -226,20 +248,20 @@ body {
 
 /* Иероглиф */
 .chinese-char {
-  font-size: clamp(2.5rem, 10vw, 4.5rem);
+  font-size: clamp(2rem, 8vw, 4rem);
   font-weight: 600;
   color: #f0f0f0;
-  line-height: 1.2;
+  line-height: 1.3;
   word-break: break-word;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 /* Пиньинь */
 .pinyin {
-  font-size: 1.6rem;
+  font-size: 1.4rem;
   font-weight: 700;
   color: #ffaa66;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   text-align: center;
   word-break: break-word;
   padding: 0 8px;
@@ -251,7 +273,7 @@ body {
   font-weight: 400;
   color: #cccccc;
   padding: 0 12px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   max-width: 95%;
   word-wrap: break-word;
   word-break: break-word;
@@ -259,9 +281,25 @@ body {
   line-height: 1.4;
 }
 
-/* Дополнительные переводы */
+/* Разбор по словам (для фраз) */
+.breakdown {
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: #88aaff;
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: rgba(68, 170, 255, 0.1);
+  border-radius: 16px;
+  max-width: 95%;
+  word-wrap: break-word;
+  word-break: break-word;
+  line-height: 1.4;
+  text-align: center;
+}
+
+/* Дополнительные переводы (для слов) */
 .extra-meanings {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 400;
   color: #999999;
   margin-top: 6px;
