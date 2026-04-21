@@ -4,15 +4,12 @@ let learnedIds = new Set();
 let yellowCards = new Map();
 let redCards = new Map();
 
-// Фразовые карточки
 let phrasesDatabase = [];
 let learnedPhrasesIds = new Set();
 let yellowPhrases = new Map();
 let redPhrases = new Map();
-let phraseQueue = [];
-let wordsSinceLastPhrase = 0;
-let isPhraseCard = false;
-let currentPhraseCard = null;
+let wordCount = 0;
+let isPhraseMode = false;
 
 let currentCard = null;
 let currentLevelWords = [];
@@ -21,61 +18,42 @@ let isFlipped = false;
 let touchStartX = 0;
 let isSwiping = false;
 
-// ========== БАЗА ФРАЗ ==========
 const phrasesList = [
   { phrase: "你好", pinyin: "nǐ hǎo", meaning: "Здравствуйте", breakdown: "你 (ты) + 好 (хорошо)" },
-  { phrase: "您好", pinyin: "nín hǎo", meaning: "Здравствуйте (уважительно)", breakdown: "您 (Вы уваж.) + 好 (хорошо)" },
-  { phrase: "大家好", pinyin: "dà jiā hǎo", meaning: "Здравствуйте всем", breakdown: "大家 (все) + 好 (хорошо)" },
+  { phrase: "您好", pinyin: "nín hǎo", meaning: "Здравствуйте (уважительно)", breakdown: "您 (Вы) + 好 (хорошо)" },
   { phrase: "早上好", pinyin: "zǎo shang hǎo", meaning: "Доброе утро", breakdown: "早上 (утро) + 好 (хорошо)" },
   { phrase: "晚上好", pinyin: "wǎn shang hǎo", meaning: "Добрый вечер", breakdown: "晚上 (вечер) + 好" },
   { phrase: "晚安", pinyin: "wǎn ān", meaning: "Спокойной ночи", breakdown: "晚 (вечер) + 安 (спокойствие)" },
   { phrase: "再见", pinyin: "zài jiàn", meaning: "До свидания", breakdown: "再 (снова) + 见 (видеть)" },
-  { phrase: "谢谢", pinyin: "xiè xie", meaning: "Спасибо", breakdown: "谢 (благодарить) + 谢" },
-  { phrase: "不客气", pinyin: "bù kè qi", meaning: "Пожалуйста (ответ на спасибо)", breakdown: "不 (не) + 客气 (вежливый)" },
+  { phrase: "谢谢", pinyin: "xiè xie", meaning: "Спасибо", breakdown: "谢 (благодарить)" },
+  { phrase: "不客气", pinyin: "bù kè qi", meaning: "Пожалуйста", breakdown: "不 (не) + 客气 (вежливый)" },
   { phrase: "对不起", pinyin: "duì bu qǐ", meaning: "Извините", breakdown: "对 (правильно) + 不起 (не получается)" },
   { phrase: "没关系", pinyin: "méi guān xi", meaning: "Ничего страшного", breakdown: "没 (нет) + 关系 (связи)" },
-  { phrase: "你好吗", pinyin: "nǐ hǎo ma", meaning: "Как дела?", breakdown: "你 (ты) + 好 (хорошо) + 吗 (вопрос)" },
-  { phrase: "我很好", pinyin: "wǒ hěn hǎo", meaning: "У меня всё хорошо", breakdown: "我 (я) + 很 (очень) + 好 (хорошо)" },
-  { phrase: "你叫什么名字", pinyin: "nǐ jiào shén me míng zi", meaning: "Как тебя зовут?", breakdown: "你 (ты) + 叫 (звать) + 什么 (что) + 名字 (имя)" },
-  { phrase: "我叫...", pinyin: "wǒ jiào...", meaning: "Меня зовут...", breakdown: "我 (я) + 叫 (звать)" },
-  { phrase: "你从哪里来", pinyin: "nǐ cóng nǎ li lái", meaning: "Откуда ты?", breakdown: "你 (ты) + 从 (из) + 哪里 (где) + 来 (приходить)" },
-  { phrase: "我来自...", pinyin: "wǒ lái zì...", meaning: "Я из...", breakdown: "我 (я) + 来自 (происходить из)" },
-  { phrase: "我听不懂", pinyin: "wǒ tīng bu dǒng", meaning: "Я не понимаю (на слух)", breakdown: "我 (я) + 听 (слушать) + 不 (не) + 懂 (понимать)" },
-  { phrase: "我不知道", pinyin: "wǒ bù zhī dào", meaning: "Я не знаю", breakdown: "我 (я) + 不 (не) + 知道 (знать)" },
-  { phrase: "我明白了", pinyin: "wǒ míng bai le", meaning: "Я понял", breakdown: "我 (я) + 明白 (понял) + 了" },
-  // Направления
+  { phrase: "你好吗", pinyin: "nǐ hǎo ma", meaning: "Как дела?", breakdown: "你 + 好 + 吗 (вопрос)" },
+  { phrase: "我很好", pinyin: "wǒ hěn hǎo", meaning: "У меня всё хорошо", breakdown: "我 (я) + 很 (очень) + 好" },
+  { phrase: "你叫什么名字", pinyin: "nǐ jiào shén me míng zi", meaning: "Как тебя зовут?", breakdown: "你 + 叫 (звать) + 什么 (что) + 名字 (имя)" },
+  { phrase: "我不知道", pinyin: "wǒ bù zhī dào", meaning: "Я не знаю", breakdown: "我 + 不 + 知道 (знать)" },
+  { phrase: "我明白了", pinyin: "wǒ míng bai le", meaning: "Я понял", breakdown: "我 + 明白 (понять) + 了" },
   { phrase: "在左边", pinyin: "zài zuǒ biān", meaning: "Слева", breakdown: "在 + 左 (левый) + 边 (сторона)" },
   { phrase: "在右边", pinyin: "zài yòu biān", meaning: "Справа", breakdown: "在 + 右 (правый) + 边" },
-  { phrase: "在前面", pinyin: "zài qián miàn", meaning: "Спереди", breakdown: "在 + 前 (перед) + 面" },
-  { phrase: "在后面", pinyin: "zài hòu miàn", meaning: "Сзади", breakdown: "在 + 后 (зад) + 面" },
-  { phrase: "在上面", pinyin: "zài shàng miàn", meaning: "Сверху", breakdown: "在 + 上 (верх) + 面" },
-  { phrase: "在下面", pinyin: "zài xià miàn", meaning: "Снизу", breakdown: "在 + 下 (низ) + 面" },
   { phrase: "一直走", pinyin: "yī zhí zǒu", meaning: "Идите прямо", breakdown: "一 (один) + 直 (прямой) + 走 (идти)" },
-  { phrase: "向左转", pinyin: "xiàng zuǒ zhuǎn", meaning: "Поверните налево", breakdown: "向 + 左 (левый) + 转 (поворачивать)" },
-  { phrase: "向右转", pinyin: "xiàng yòu zhuǎn", meaning: "Поверните направо", breakdown: "向 + 右 (правый) + 转" },
-  // В магазине
+  { phrase: "向左转", pinyin: "xiàng zuǒ zhuǎn", meaning: "Поверните налево", breakdown: "向 + 左 + 转 (поворачивать)" },
+  { phrase: "向右转", pinyin: "xiàng yòu zhuǎn", meaning: "Поверните направо", breakdown: "向 + 右 + 转" },
   { phrase: "多少钱", pinyin: "duō shao qián", meaning: "Сколько стоит?", breakdown: "多少 (сколько) + 钱 (деньги)" },
   { phrase: "太贵了", pinyin: "tài guì le", meaning: "Слишком дорого", breakdown: "太 (слишком) + 贵 (дорогой) + 了" },
   { phrase: "我要这个", pinyin: "wǒ yào zhè ge", meaning: "Я хочу это", breakdown: "我 + 要 (хотеть) + 这个 (это)" },
-  { phrase: "我要买单", pinyin: "wǒ yào mǎi dān", meaning: "Я хочу заплатить", breakdown: "我要 + 买单 (оплатить счёт)" },
-  // Разговорные
   { phrase: "加油", pinyin: "jiā yóu", meaning: "Держись!/Давай!", breakdown: "加 (добавлять) + 油 (масло)" },
   { phrase: "慢慢来", pinyin: "màn man lái", meaning: "Не торопись", breakdown: "慢慢 (медленно) + 来 (делать)" },
   { phrase: "真的吗", pinyin: "zhēn de ma", meaning: "Правда?", breakdown: "真的 (правда) + 吗" },
   { phrase: "太好了", pinyin: "tài hǎo le", meaning: "Отлично!", breakdown: "太 + 好 + 了" },
   { phrase: "小心", pinyin: "xiǎo xīn", meaning: "Осторожно!", breakdown: "小 (маленький) + 心 (сердце)" },
-  { phrase: "快点", pinyin: "kuài diǎn", meaning: "Быстрее!", breakdown: "快 (быстрый) + 点 (немного)" },
   { phrase: "等一下", pinyin: "děng yī xià", meaning: "Подожди минутку", breakdown: "等 (ждать) + 一下 (немного)" },
-  // Время
   { phrase: "现在几点", pinyin: "xiàn zài jǐ diǎn", meaning: "Который час?", breakdown: "现在 (сейчас) + 几点 (сколько часов)" },
   { phrase: "今天", pinyin: "jīn tiān", meaning: "Сегодня", breakdown: "今 (сейчас) + 天 (день)" },
   { phrase: "明天", pinyin: "míng tiān", meaning: "Завтра", breakdown: "明 (следующий) + 天" },
-  { phrase: "昨天", pinyin: "zuó tiān", meaning: "Вчера", breakdown: "昨 (предыдущий) + 天" },
-  { phrase: "现在", pinyin: "xiàn zài", meaning: "Сейчас", breakdown: "现 (сейчас) + 在 (быть в процессе)" },
-  { phrase: "马上", pinyin: "mǎ shàng", meaning: "Сразу/Сейчас", breakdown: "马 (лошадь) + 上 (на)" }
+  { phrase: "昨天", pinyin: "zuó tiān", meaning: "Вчера", breakdown: "昨 (предыдущий) + 天" }
 ];
 
-// Загрузка словаря
 async function loadDictionary() {
   try {
     const response = await fetch('hsk.json');
@@ -96,7 +74,6 @@ async function loadDictionary() {
       redCards = new Map(parsed.map(p => [p.id, new Date(p.until)]));
     }
     
-    // Инициализируем фразы
     for (let i = 0; i < phrasesList.length; i++) {
       const phrase = { ...phrasesList[i] };
       phrase.id = `phrase_${i}`;
@@ -136,11 +113,7 @@ function saveAllData() {
 }
 
 function getAvailablePhrases() {
-  return phrasesDatabase.filter(p => 
-    !learnedPhrasesIds.has(p.id) && 
-    !yellowPhrases.has(p.id) && 
-    !redPhrases.has(p.id)
-  );
+  return phrasesDatabase.filter(p => !learnedPhrasesIds.has(p.id) && !yellowPhrases.has(p.id) && !redPhrases.has(p.id));
 }
 
 function checkReturnedCards() {
@@ -163,17 +136,12 @@ function getNextReturnDate(status) {
 function initForLevel(level) {
   activeLevel = level;
   checkReturnedCards();
+  wordCount = 0;
   
   const allLevelWords = fullDictionary.filter(w => w.level == level);
   currentLevelWords = allLevelWords.filter(w => !learnedIds.has(w.id) && !yellowCards.has(w.id) && !redCards.has(w.id));
-  
   currentLevelWords = shuffleArray([...currentLevelWords]);
   currentCardIndex = 0;
-  wordsSinceLastPhrase = 0;
-  isPhraseCard = false;
-  
-  const availablePhrases = getAvailablePhrases();
-  phraseQueue = shuffleArray([...availablePhrases]);
   
   updateAllStats();
   loadNextCard();
@@ -182,39 +150,27 @@ function initForLevel(level) {
 function loadNextCard() {
   const availablePhrases = getAvailablePhrases();
   
-  // Проверяем, пора ли показать фразу (каждые 5 слов)
-  if (wordsSinceLastPhrase >= 5 && availablePhrases.length > 0) {
-    if (phraseQueue.length === 0) phraseQueue = shuffleArray([...availablePhrases]);
-    if (phraseQueue.length > 0) {
-      currentPhraseCard = phraseQueue.shift();
-      isPhraseCard = true;
-      currentCard = currentPhraseCard;
-      wordsSinceLastPhrase = 0;
-      console.log("Показываем фразу:", currentPhraseCard.phrase);
-      updateCardDisplay();
-      updateCardColor();
-      return;
-    }
-  }
-  
-  // Показываем слово
-  if (currentLevelWords.length > 0) {
+  // Каждые 4 слова показываем фразу
+  if (wordCount >= 4 && availablePhrases.length > 0) {
+    const randomPhrase = availablePhrases[Math.floor(Math.random() * availablePhrases.length)];
+    currentCard = randomPhrase;
+    isPhraseMode = true;
+    wordCount = 0;
+    console.log("Показываем фразу:", randomPhrase.phrase);
+  } else if (currentLevelWords.length > 0) {
     if (currentCardIndex >= currentLevelWords.length) currentCardIndex = 0;
     currentCard = currentLevelWords[currentCardIndex];
-    isPhraseCard = false;
-    wordsSinceLastPhrase++;
+    isPhraseMode = false;
+    wordCount++;
     currentCardIndex++;
-    console.log("Показываем слово:", currentCard.hanzi, "Слов до фразы:", 5 - wordsSinceLastPhrase);
+    console.log("Показываем слово:", currentCard.hanzi, "До фразы:", 4 - wordCount);
   } else if (availablePhrases.length > 0) {
-    // Слов нет, показываем фразу
-    if (phraseQueue.length === 0) phraseQueue = shuffleArray([...availablePhrases]);
-    currentPhraseCard = phraseQueue.shift();
-    isPhraseCard = true;
-    currentCard = currentPhraseCard;
-    wordsSinceLastPhrase = 0;
+    const randomPhrase = availablePhrases[Math.floor(Math.random() * availablePhrases.length)];
+    currentCard = randomPhrase;
+    isPhraseMode = true;
+    wordCount = 0;
   } else {
     currentCard = null;
-    isPhraseCard = false;
   }
   
   isFlipped = false;
@@ -278,7 +234,7 @@ function updateCardDisplay() {
   
   if (currentCard.isPhrase) {
     document.getElementById('meaning').innerHTML = currentCard.meaning;
-    document.getElementById('breakdown').innerHTML = `<span style="color: #88ccff;">📖 Разбор:</span> ${currentCard.breakdown || currentCard.meaning}`;
+    document.getElementById('breakdown').innerHTML = `📖 ${currentCard.breakdown || currentCard.meaning}`;
   } else {
     const meaning = currentCard.translations?.rus?.[0] || "(нет перевода)";
     document.getElementById('meaning').innerHTML = meaning;
