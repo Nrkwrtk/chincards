@@ -43,7 +43,7 @@ function initForLevel(level) {
     return;
   }
   
-  // Перемешиваем слова при каждой инициализации уровня
+  // Перемешиваем слова
   currentLevelWords = shuffleArray([...currentLevelWords]);
   currentCardIndex = 0;
   currentCard = currentLevelWords[currentCardIndex];
@@ -55,7 +55,7 @@ function initForLevel(level) {
   updateCardDisplay();
 }
 
-// Перемешивание массива (рандомный порядок)
+// Перемешивание
 function shuffleArray(arr) {
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -107,39 +107,19 @@ function updateCardDisplay() {
   }
 }
 
-// Обновление всех счётчиков
+// Обновление счётчиков (только два)
 function updateAllStats() {
-  // Счётчик для текущего уровня
+  // Счётчик "осталось" для текущего уровня
   const allCurrentLevelWords = fullDictionary.filter(w => w.level == activeLevel);
   const totalInLevel = allCurrentLevelWords.length;
   const learnedInLevel = allCurrentLevelWords.filter(w => learnedIds.has(w.id)).length;
   const leftInLevel = totalInLevel - learnedInLevel;
   
   document.getElementById('cardsLeft').innerText = leftInLevel;
-  document.getElementById('learnedCount').innerText = learnedInLevel;
   
-  // Общий счётчик выученных слов (по всем уровням)
+  // Общий счётчик "уже знаю" (все выученные слова по всем уровням)
   const totalLearnedAllLevels = fullDictionary.filter(w => learnedIds.has(w.id)).length;
-  const totalWordsAllLevels = fullDictionary.length;
-  
-  // Добавляем или обновляем общий счётчик в интерфейсе
-  let totalStatElement = document.getElementById('totalLearned');
-  if (!totalStatElement) {
-    // Если элемент ещё не создан, добавляем его
-    const statsContainer = document.querySelector('.stats-container');
-    if (statsContainer && statsContainer.children.length === 2) {
-      const newStatCard = document.createElement('div');
-      newStatCard.className = 'stat-card';
-      newStatCard.id = 'totalStatCard';
-      newStatCard.innerHTML = `
-        <span class="stat-value" id="totalLearned">${totalLearnedAllLevels}</span>
-        <span class="stat-label">всего выучено</span>
-      `;
-      statsContainer.appendChild(newStatCard);
-    }
-  } else {
-    totalStatElement.innerText = totalLearnedAllLevels;
-  }
+  document.getElementById('totalLearned').innerText = totalLearnedAllLevels;
 }
 
 // Озвучивание
@@ -165,11 +145,10 @@ function flipCard() {
   }
 }
 
-// Свайп влево (не знаю → в конец)
+// Свайп влево (не знаю)
 function swipeLeft() {
   if (!currentCard || currentLevelWords.length <= 1) return;
   
-  // Перемещаем текущее слово в конец
   currentLevelWords.splice(currentCardIndex, 1);
   currentLevelWords.push(currentCard);
   
@@ -185,17 +164,13 @@ function swipeLeft() {
   animateSwipe('left');
 }
 
-// Свайп вправо (знаю → удаляем и запоминаем)
+// Свайп вправо (знаю)
 function swipeRight() {
   if (!currentCard) return;
   
-  // Добавляем ID слова в выученные
   learnedIds.add(currentCard.id);
-  
-  // Сохраняем в localStorage
   localStorage.setItem('chincards_learned', JSON.stringify([...learnedIds]));
   
-  // Удаляем слово из текущего массива
   currentLevelWords.splice(currentCardIndex, 1);
   
   if (currentLevelWords.length === 0) {
