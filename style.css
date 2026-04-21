@@ -35,25 +35,25 @@ body {
   align-items: center;
 }
 
-/* Тёмная плашка сверху */
+/* Тёмная плашка сверху — придвинута к карточке */
 .header {
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(20px);
   border-radius: 28px;
-  padding: 12px 16px;
-  margin-bottom: 24px;
+  padding: 10px 16px;
+  margin-bottom: 16px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   width: 92%;
   max-width: 360px;
 }
 
-/* Строка с HSK и кнопками */
+/* Строка с HSK и кнопками — центрирована */
 .level-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 14px;
-  gap: 12px;
+  justify-content: center;
+  margin-bottom: 12px;
+  gap: 8px;
 }
 
 .level-label {
@@ -64,7 +64,6 @@ body {
   background: none;
   padding: 0;
   white-space: nowrap;
-  margin-left: 6px;
 }
 
 /* Контейнер с кнопками */
@@ -97,7 +96,7 @@ body {
   box-shadow: 0 2px 8px rgba(255, 111, 44, 0.25);
 }
 
-/* Статистика — два счётчика */
+/* Статистика */
 .stats-container {
   display: flex;
   gap: 12px;
@@ -108,20 +107,20 @@ body {
   flex: 1;
   background: rgba(0, 0, 0, 0.4);
   border-radius: 20px;
-  padding: 8px 12px;
+  padding: 6px 10px;
   text-align: center;
 }
 
 .stat-value {
   display: block;
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 800;
   color: #ff9f4a;
   line-height: 1.2;
 }
 
 .stat-label {
-  font-size: 11px;
+  font-size: 10px;
   color: rgba(255, 255, 255, 0.6);
   letter-spacing: 0.3px;
 }
@@ -212,7 +211,7 @@ body {
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-/* Пиньинь — оранжевый, жирный */
+/* Пиньинь */
 .pinyin {
   font-size: 1.6rem;
   font-weight: 700;
@@ -223,7 +222,7 @@ body {
   padding: 0 8px;
 }
 
-/* Основной перевод — без фона, светло-серый, не жирный */
+/* Основной перевод */
 .meaning {
   font-size: 1.2rem;
   font-weight: 400;
