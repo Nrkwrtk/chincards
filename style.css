@@ -33,7 +33,7 @@ body {
   height: 100%;
 }
 
-/* Верхняя плашка — теперь той же ширины, что и карточка */
+/* Верхняя плашка */
 .header {
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(20px);
@@ -64,6 +64,8 @@ body {
 .level-switch {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 .level-btn {
@@ -84,6 +86,12 @@ body {
   background: linear-gradient(135deg, #ff9f4a, #ff6b2c);
   opacity: 1;
   box-shadow: 0 2px 8px rgba(255, 111, 44, 0.25);
+}
+
+/* Специальный стиль для кнопки F в активном состоянии */
+.level-btn.phrase-mode-btn.active {
+  background: linear-gradient(135deg, #44aaff, #2288cc);
+  box-shadow: 0 2px 8px rgba(68, 170, 255, 0.25);
 }
 
 .stats-container {
@@ -111,7 +119,7 @@ body {
   color: rgba(255, 255, 255, 0.6);
 }
 
-/* Контейнер карточки — центрирован */
+/* Контейнер карточки */
 .card-container {
   perspective: 1200px;
   width: 100%;
@@ -120,7 +128,7 @@ body {
   align-items: center;
 }
 
-/* Карточка — такая же ширина, как хедер */
+/* Карточка */
 .card {
   width: 92%;
   max-width: 360px;
