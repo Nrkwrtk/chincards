@@ -1,5 +1,6 @@
 let fullDictionary = [];
 let activeLevel = 1;
+let isPhraseOnlyMode = false;  // Режим только фраз
 
 // Статусы слов (HSK)
 let learnedIds = new Set();
@@ -157,6 +158,9 @@ function getNextDateForWord(type) {
 }
 
 function buildDeck() {
+  if (isPhraseOnlyMode) {
+    return []; // В режиме только фраз колода слов пуста
+  }
   const allLevelWords = fullDictionary.filter(w => w.level == activeLevel);
   const available = allLevelWords.filter(w => !learnedIds.has(w.id) && !yellowCards.has(w.id) && !redCards.has(w.id));
   const shuffled = shuffleArray([...available]);
@@ -173,38 +177,37 @@ function shuffleArray(arr) {
 }
 
 function initLevel(level) {
-  activeLevel = level;
+  if (!isPhraseOnlyMode) {
+    activeLevel = level;
+  }
   checkReturns();
   currentDeck = buildDeck();
   currentDeckIndex = 0;
   cardsSinceLastPhrase = 0;
   updateStats();
   loadNextCard();
-  console.log(`Уровень ${level} инициализирован`);
+  console.log(`${isPhraseOnlyMode ? 'РЕЖИМ ТОЛЬКО ФРАЗ' : 'Уровень ' + activeLevel} инициализирован`);
 }
 
 function loadNextCard() {
   const availablePhrases = getAvailablePhrases();
   
-  // Если колода закончилась или пустая, пересоздаём
-  if (currentDeckIndex >= currentDeck.length || currentDeck.length === 0) {
+  // Если колода закончилась или пустая, пересоздаём (только если не в режиме фраз)
+  if (!isPhraseOnlyMode && (currentDeckIndex >= currentDeck.length || currentDeck.length === 0)) {
     console.log("Колода закончилась, пересоздаём");
     currentDeck = buildDeck();
     currentDeckIndex = 0;
   }
   
-  // Решаем, показывать ли фразу
-  let showPhrase = false;
-  if (availablePhrases.length > 0 && cardsSinceLastPhrase >= 5) {
-    showPhrase = true;
-  }
+  // В режиме только фраз или если прошло 5 слов и есть фразы
+  const showPhrase = isPhraseOnlyMode || (availablePhrases.length > 0 && cardsSinceLastPhrase >= 5);
   
-  if (showPhrase) {
+  if (showPhrase && availablePhrases.length > 0) {
     const randomIndex = Math.floor(Math.random() * availablePhrases.length);
     currentCard = availablePhrases[randomIndex];
     cardsSinceLastPhrase = 0;
     console.log("ФРАЗА:", currentCard.text);
-  } else if (currentDeck.length > 0 && currentDeckIndex < currentDeck.length) {
+  } else if (!isPhraseOnlyMode && currentDeck.length > 0 && currentDeckIndex < currentDeck.length) {
     currentCard = currentDeck[currentDeckIndex];
     currentDeckIndex++;
     cardsSinceLastPhrase++;
@@ -330,7 +333,6 @@ function onSwipeLeft() {
   }
   
   saveAll();
-  // Переходим к следующей карточке
   loadNextCard();
   animate('left');
 }
@@ -382,7 +384,6 @@ function onSwipeRight() {
   }
   
   saveAll();
-  // Переходим к следующей карточке
   loadNextCard();
   animate('right');
 }
@@ -434,12 +435,26 @@ function setupTouch() {
 function setupLevels() {
   document.querySelectorAll('.level-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      const lvl = parseInt(btn.dataset.level);
-      if (lvl === activeLevel) return;
-      activeLevel = lvl;
-      document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      initLevel(activeLevel);
+      const value = btn.dataset.level;
+      
+      if (value === 'phrase') {
+        // Режим только фраз
+        if (isPhraseOnlyMode) return;
+        isPhraseOnlyMode = true;
+        // Снимаем активность со всех кнопок HSK
+        document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        initLevel(null);
+      } else {
+        // Обычный режим HSK
+        const lvl = parseInt(value);
+        if (!isPhraseOnlyMode && lvl === activeLevel) return;
+        isPhraseOnlyMode = false;
+        activeLevel = lvl;
+        document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        initLevel(activeLevel);
+      }
     });
   });
 }
