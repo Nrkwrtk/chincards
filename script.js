@@ -15,12 +15,14 @@ async function loadDictionary() {
     const response = await fetch('hsk.json');
     fullDictionary = await response.json();
     
+    // Загружаем сохранённые выученные слова из localStorage
     const saved = localStorage.getItem('chincards_learned');
     if (saved) {
       learnedIds = new Set(JSON.parse(saved));
+      console.log(`Загружено выученных слов: ${learnedIds.size}`);
     }
     
-    console.log(`Загружено слов: ${fullDictionary.length}`);
+    console.log(`Загружено слов всего: ${fullDictionary.length}`);
     initForLevel(activeLevel);
   } catch (err) {
     console.error('Ошибка загрузки hsk.json', err);
@@ -33,7 +35,7 @@ function initForLevel(level) {
   const allLevelWords = fullDictionary.filter(w => w.level == level);
   currentLevelWords = allLevelWords.filter(w => !learnedIds.has(w.id));
   
-  updateStats();
+  updateAllStats();
   
   if (currentLevelWords.length === 0) {
     currentCard = null;
@@ -41,6 +43,7 @@ function initForLevel(level) {
     return;
   }
   
+  // Перемешиваем слова при каждой инициализации уровня
   currentLevelWords = shuffleArray([...currentLevelWords]);
   currentCardIndex = 0;
   currentCard = currentLevelWords[currentCardIndex];
@@ -52,7 +55,7 @@ function initForLevel(level) {
   updateCardDisplay();
 }
 
-// Перемешивание
+// Перемешивание массива (рандомный порядок)
 function shuffleArray(arr) {
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -104,8 +107,9 @@ function updateCardDisplay() {
   }
 }
 
-// Обновление счётчиков
-function updateStats() {
+// Обновление всех счётчиков
+function updateAllStats() {
+  // Счётчик для текущего уровня
   const allCurrentLevelWords = fullDictionary.filter(w => w.level == activeLevel);
   const totalInLevel = allCurrentLevelWords.length;
   const learnedInLevel = allCurrentLevelWords.filter(w => learnedIds.has(w.id)).length;
@@ -113,6 +117,29 @@ function updateStats() {
   
   document.getElementById('cardsLeft').innerText = leftInLevel;
   document.getElementById('learnedCount').innerText = learnedInLevel;
+  
+  // Общий счётчик выученных слов (по всем уровням)
+  const totalLearnedAllLevels = fullDictionary.filter(w => learnedIds.has(w.id)).length;
+  const totalWordsAllLevels = fullDictionary.length;
+  
+  // Добавляем или обновляем общий счётчик в интерфейсе
+  let totalStatElement = document.getElementById('totalLearned');
+  if (!totalStatElement) {
+    // Если элемент ещё не создан, добавляем его
+    const statsContainer = document.querySelector('.stats-container');
+    if (statsContainer && statsContainer.children.length === 2) {
+      const newStatCard = document.createElement('div');
+      newStatCard.className = 'stat-card';
+      newStatCard.id = 'totalStatCard';
+      newStatCard.innerHTML = `
+        <span class="stat-value" id="totalLearned">${totalLearnedAllLevels}</span>
+        <span class="stat-label">всего выучено</span>
+      `;
+      statsContainer.appendChild(newStatCard);
+    }
+  } else {
+    totalStatElement.innerText = totalLearnedAllLevels;
+  }
 }
 
 // Озвучивание
@@ -138,10 +165,11 @@ function flipCard() {
   }
 }
 
-// Свайп влево (не знаю)
+// Свайп влево (не знаю → в конец)
 function swipeLeft() {
   if (!currentCard || currentLevelWords.length <= 1) return;
   
+  // Перемещаем текущее слово в конец
   currentLevelWords.splice(currentCardIndex, 1);
   currentLevelWords.push(currentCard);
   
@@ -153,17 +181,22 @@ function swipeLeft() {
   card.classList.remove('flipped');
   
   updateCardDisplay();
-  updateStats();
+  updateAllStats();
   animateSwipe('left');
 }
 
-// Свайп вправо (знаю)
+// Свайп вправо (знаю → удаляем и запоминаем)
 function swipeRight() {
   if (!currentCard) return;
   
+  // Добавляем ID слова в выученные
   learnedIds.add(currentCard.id);
-  currentLevelWords.splice(currentCardIndex, 1);
+  
+  // Сохраняем в localStorage
   localStorage.setItem('chincards_learned', JSON.stringify([...learnedIds]));
+  
+  // Удаляем слово из текущего массива
+  currentLevelWords.splice(currentCardIndex, 1);
   
   if (currentLevelWords.length === 0) {
     currentCard = null;
@@ -171,7 +204,7 @@ function swipeRight() {
     isFlipped = false;
     document.getElementById('flashcard').classList.remove('flipped');
     updateCardDisplay();
-    updateStats();
+    updateAllStats();
     animateSwipe('right');
     return;
   }
@@ -182,7 +215,7 @@ function swipeRight() {
   document.getElementById('flashcard').classList.remove('flipped');
   
   updateCardDisplay();
-  updateStats();
+  updateAllStats();
   animateSwipe('right');
 }
 
