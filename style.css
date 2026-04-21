@@ -16,8 +16,6 @@ body {
   padding: 16px;
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
-  padding-left: env(safe-area-inset-left);
-  padding-right: env(safe-area-inset-right);
   overflow: hidden;
   position: fixed;
   width: 100%;
@@ -35,7 +33,6 @@ body {
   align-items: center;
 }
 
-/* Тёмная плашка сверху */
 .header {
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(20px);
@@ -59,16 +56,11 @@ body {
   font-size: 18px;
   font-weight: 700;
   color: #ff9f4a;
-  letter-spacing: 0.5px;
-  background: none;
-  padding: 0;
-  white-space: nowrap;
 }
 
 .level-switch {
   display: flex;
   gap: 8px;
-  flex-wrap: nowrap;
 }
 
 .level-btn {
@@ -83,8 +75,6 @@ body {
   opacity: 0.8;
   transition: all 0.2s ease;
   cursor: pointer;
-  -webkit-touch-callout: none;
-  flex-shrink: 0;
 }
 
 .level-btn.active {
@@ -96,7 +86,6 @@ body {
 .stats-container {
   display: flex;
   gap: 12px;
-  justify-content: center;
 }
 
 .stat-card {
@@ -112,25 +101,19 @@ body {
   font-size: 22px;
   font-weight: 800;
   color: #ff9f4a;
-  line-height: 1.2;
 }
 
 .stat-label {
   font-size: 10px;
   color: rgba(255, 255, 255, 0.6);
-  letter-spacing: 0.3px;
 }
 
 .card-container {
   perspective: 1200px;
-  margin: 0;
-  touch-action: pan-y pinch-zoom;
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 0;
-  -webkit-overflow-scrolling: touch;
   width: 100%;
 }
 
@@ -144,7 +127,6 @@ body {
   cursor: pointer;
   border-radius: 32px;
   box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.5);
-  margin: 0 auto;
 }
 
 .card.flipped {
@@ -157,79 +139,47 @@ body {
   height: 100%;
   backface-visibility: hidden;
   border-radius: 32px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 20px;
 }
 
 .card-front {
   background: linear-gradient(145deg, #1a1a2a, #252540);
   transform: rotateY(0deg);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  padding: 20px;
-}
-
-/* Жёлтая карточка */
-.card-front.yellow-card {
-  background: linear-gradient(145deg, #3a2a1a, #4a3a1a);
-  border: 2px solid #ffaa33;
-}
-
-.card-back.yellow-card {
-  background: linear-gradient(145deg, #3a2a1a, #4a3a1a);
-  border: 2px solid #ffaa33;
-}
-
-/* Красная карточка */
-.card-front.red-card {
-  background: linear-gradient(145deg, #3a1a1a, #4a2525);
-  border: 2px solid #ff5555;
-}
-
-.card-back.red-card {
-  background: linear-gradient(145deg, #3a1a1a, #4a2525);
-  border: 2px solid #ff5555;
-}
-
-/* Фразовая карточка - голубая рамка */
-.card-front.phrase-card {
-  border: 3px solid #44aaff;
-}
-
-.card-back.phrase-card {
-  border: 3px solid #44aaff;
-}
-
-.card-front.phrase-card.yellow-card {
-  border: 3px solid #ffaa33;
-}
-
-.card-front.phrase-card.red-card {
-  border: 3px solid #ff5555;
 }
 
 .card-back {
   background: linear-gradient(145deg, #1e1e30, #282844);
   transform: rotateY(180deg);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  padding: 20px;
   overflow-y: auto;
 }
 
-/* Крупный иероглиф как раньше */
+/* Жёлтая карточка */
+.card-front.yellow, .card-back.yellow {
+  background: linear-gradient(145deg, #3a2a1a, #4a3a1a);
+  border: 2px solid #ffaa33;
+}
+
+/* Красная карточка */
+.card-front.red, .card-back.red {
+  background: linear-gradient(145deg, #3a1a1a, #4a2525);
+  border: 2px solid #ff5555;
+}
+
+/* Фразовая карточка - голубая рамка */
+.card-front.phrase, .card-back.phrase {
+  border: 3px solid #44aaff;
+}
+
 .chinese-char {
   font-size: clamp(3rem, 12vw, 5rem);
   font-weight: 600;
   color: #f0f0f0;
   line-height: 1.2;
-  word-break: break-word;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
@@ -238,22 +188,15 @@ body {
   font-weight: 700;
   color: #ffaa66;
   margin-bottom: 16px;
-  text-align: center;
-  word-break: break-word;
-  padding: 0 8px;
 }
 
 .meaning {
   font-size: 1.2rem;
   font-weight: 400;
   color: #cccccc;
-  padding: 0 12px;
   margin-bottom: 10px;
   max-width: 95%;
   word-wrap: break-word;
-  word-break: break-word;
-  white-space: normal;
-  line-height: 1.4;
   background: transparent;
 }
 
@@ -266,10 +209,6 @@ body {
   background: rgba(68, 170, 255, 0.1);
   border-radius: 16px;
   max-width: 95%;
-  word-wrap: break-word;
-  word-break: break-word;
-  line-height: 1.4;
-  text-align: center;
 }
 
 .card-container.swipe-left .card {
