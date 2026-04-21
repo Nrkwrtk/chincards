@@ -38,7 +38,7 @@ body {
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(20px);
   border-radius: 28px;
-  padding: 8px 14px;
+  padding: 8px 12px;
   margin-bottom: 60px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   width: 92%;
@@ -52,34 +52,35 @@ body {
   align-items: center;
   justify-content: center;
   margin-bottom: 8px;
-  gap: 10px;
+  gap: 6px;
 }
 
 .level-label {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
   color: #ff9f4a;
 }
 
 .level-switch {
   display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+  gap: 5px;
+  flex-wrap: nowrap;
   justify-content: center;
 }
 
 .level-btn {
   background: rgba(255, 255, 255, 0.12);
   border: none;
-  width: 34px;
-  height: 34px;
-  border-radius: 34px;
-  font-size: 15px;
+  width: 30px;
+  height: 30px;
+  border-radius: 30px;
+  font-size: 13px;
   font-weight: 600;
   color: white;
   opacity: 0.8;
   transition: all 0.2s ease;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .level-btn.active {
@@ -88,7 +89,6 @@ body {
   box-shadow: 0 2px 8px rgba(255, 111, 44, 0.25);
 }
 
-/* Специальный стиль для кнопки F в активном состоянии */
 .level-btn.phrase-mode-btn.active {
   background: linear-gradient(135deg, #44aaff, #2288cc);
   box-shadow: 0 2px 8px rgba(68, 170, 255, 0.25);
@@ -185,19 +185,16 @@ body {
   border: 2px solid #ff5555;
 }
 
-/* ========== ФРАЗЫ (свои цвета) ========== */
-/* Голубая фраза (начальный статус) */
+/* ========== ФРАЗЫ ========== */
 .card-front.phrase-blue, .card-back.phrase-blue {
   background: linear-gradient(145deg, #1a2a3a, #1a3a4a);
 }
 
-/* Синяя фраза (1 раз знаю) */
 .card-front.phrase-darkblue, .card-back.phrase-darkblue {
   background: linear-gradient(145deg, #0f2a3a, #0f3a4a);
   border: 2px solid #3399ff;
 }
 
-/* Тёмно-синяя фраза (2+ раз знаю) */
 .card-front.phrase-navy, .card-back.phrase-navy {
   background: linear-gradient(145deg, #0a1a2a, #0a2a3a);
   border: 2px solid #1a66cc;
