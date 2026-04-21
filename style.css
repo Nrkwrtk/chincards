@@ -26,20 +26,20 @@ body {
   max-width: 500px;
   width: 100%;
   margin: 0 auto;
-  height: 100%;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  height: 100%;
 }
 
-/* Тёмная плашка сверху — придвинута к карточке */
+/* Верхняя плашка — без привязки к верху */
 .header {
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(20px);
   border-radius: 28px;
   padding: 8px 14px;
-  margin-bottom: 8px;  /* Уменьшили до 8px */
+  margin-bottom: 20px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   width: 92%;
   max-width: 360px;
@@ -50,7 +50,7 @@ body {
   align-items: center;
   justify-content: center;
   margin-bottom: 8px;
-  gap: 8px;
+  gap: 10px;
 }
 
 .level-label {
@@ -93,30 +93,29 @@ body {
   flex: 1;
   background: rgba(0, 0, 0, 0.4);
   border-radius: 20px;
-  padding: 4px 8px;
+  padding: 6px 10px;
   text-align: center;
 }
 
 .stat-value {
   display: block;
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 800;
   color: #ff9f4a;
 }
 
 .stat-label {
-  font-size: 9px;
+  font-size: 10px;
   color: rgba(255, 255, 255, 0.6);
 }
 
+/* Контейнер карточки — центрирован */
 .card-container {
   perspective: 1200px;
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   width: 100%;
-  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .card {
@@ -149,6 +148,7 @@ body {
   padding: 20px;
 }
 
+/* ========== СЛОВА (HSK) ========== */
 .card-front {
   background: linear-gradient(145deg, #1a1a2a, #252540);
   transform: rotateY(0deg);
@@ -160,40 +160,38 @@ body {
   overflow-y: auto;
 }
 
-/* Жёлтая карточка (для слов) */
+/* Жёлтые слова */
 .card-front.yellow, .card-back.yellow {
   background: linear-gradient(145deg, #3a2a1a, #4a3a1a);
   border: 2px solid #ffaa33;
 }
 
-/* Красная карточка (для слов) */
+/* Красные слова */
 .card-front.red, .card-back.red {
   background: linear-gradient(145deg, #3a1a1a, #4a2525);
   border: 2px solid #ff5555;
 }
 
-/* Фразовые карточки - голубая рамка (обычная) */
-.card-front.phrase, .card-back.phrase {
-  border: 3px solid #44aaff;
-  box-shadow: 0 0 8px rgba(68, 170, 255, 0.5);
+/* ========== ФРАЗЫ (свои цвета) ========== */
+/* Голубая фраза (начальный статус) */
+.card-front.phrase-blue, .card-back.phrase-blue {
+  background: linear-gradient(145deg, #1a2a3a, #1a3a4a);
 }
 
-/* Фразовые карточки - синяя (после первого "знаю") */
-.card-front.phrase.blue, .card-back.phrase.blue {
-  border: 3px solid #3388cc;
-  background: linear-gradient(145deg, #1a2a3a, #1a2a4a);
-  box-shadow: 0 0 8px rgba(51, 136, 204, 0.5);
+/* Синяя фраза (1 раз знаю) */
+.card-front.phrase-darkblue, .card-back.phrase-darkblue {
+  background: linear-gradient(145deg, #0f2a3a, #0f3a4a);
+  border: 2px solid #3399ff;
 }
 
-/* Фразовые карточки - тёмно-синяя (после второго "знаю") */
-.card-front.phrase.darkblue, .card-back.phrase.darkblue {
-  border: 3px solid #1155aa;
-  background: linear-gradient(145deg, #0a1a2a, #0a1a3a);
-  box-shadow: 0 0 8px rgba(17, 85, 170, 0.5);
+/* Тёмно-синяя фраза (2+ раз знаю) */
+.card-front.phrase-navy, .card-back.phrase-navy {
+  background: linear-gradient(145deg, #0a1a2a, #0a2a3a);
+  border: 2px solid #1a66cc;
 }
 
 .chinese-char {
-  font-size: clamp(3rem, 12vw, 5rem);
+  font-size: clamp(2.8rem, 11vw, 4.8rem);
   font-weight: 600;
   color: #f0f0f0;
   line-height: 1.2;
@@ -201,14 +199,14 @@ body {
 }
 
 .pinyin {
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   font-weight: 700;
   color: #ffaa66;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .meaning {
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   font-weight: 400;
   color: #cccccc;
   margin-bottom: 10px;
