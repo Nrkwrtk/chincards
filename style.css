@@ -53,34 +53,35 @@ body {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 14px;
-  gap: 8px;
+  gap: 12px;
 }
 
 .level-label {
-  font-size: 17px;
+  font-size: 20px;
   font-weight: 700;
   color: #ff9f4a;
   letter-spacing: 0.5px;
   background: none;
   padding: 0;
   white-space: nowrap;
+  margin-left: 6px;
 }
 
-/* Контейнер с кнопками — компактный */
+/* Контейнер с кнопками */
 .level-switch {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: nowrap;
 }
 
-/* Кнопки уровней — чуть меньше */
+/* Кнопки уровней */
 .level-btn {
   background: rgba(255, 255, 255, 0.12);
   border: none;
-  width: 32px;
-  height: 32px;
-  border-radius: 32px;
-  font-size: 14px;
+  width: 34px;
+  height: 34px;
+  border-radius: 34px;
+  font-size: 15px;
   font-weight: 600;
   color: white;
   opacity: 0.8;
@@ -96,10 +97,10 @@ body {
   box-shadow: 0 2px 8px rgba(255, 111, 44, 0.25);
 }
 
-/* Статистика */
+/* Статистика — два счётчика */
 .stats-container {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   justify-content: center;
 }
 
@@ -107,20 +108,20 @@ body {
   flex: 1;
   background: rgba(0, 0, 0, 0.4);
   border-radius: 20px;
-  padding: 6px 8px;
+  padding: 8px 12px;
   text-align: center;
 }
 
 .stat-value {
   display: block;
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 800;
   color: #ff9f4a;
   line-height: 1.2;
 }
 
 .stat-label {
-  font-size: 10px;
+  font-size: 11px;
   color: rgba(255, 255, 255, 0.6);
   letter-spacing: 0.3px;
 }
@@ -157,14 +158,13 @@ body {
   transform: rotateY(180deg);
 }
 
-/* Общий стиль для обеих сторон — тёмный */
+/* Общий стиль для обеих сторон */
 .card-front, .card-back {
   position: absolute;
   width: 100%;
   height: 100%;
   backface-visibility: hidden;
   border-radius: 32px;
-  background: linear-gradient(145deg, #1e1e2f, #2a2a3e);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
 }
 
@@ -202,7 +202,7 @@ body {
   justify-content: center;
 }
 
-/* Иероглиф — светлый */
+/* Иероглиф */
 .chinese-char {
   font-size: clamp(2.5rem, 10vw, 4.5rem);
   font-weight: 600;
@@ -212,25 +212,23 @@ body {
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-/* Пиньинь */
+/* Пиньинь — оранжевый, жирный */
 .pinyin {
-  font-size: 1.5rem;
-  font-weight: 600;
+  font-size: 1.6rem;
+  font-weight: 700;
   color: #ffaa66;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
   text-align: center;
   word-break: break-word;
   padding: 0 8px;
 }
 
-/* Основной перевод — светлый текст на тёмном фоне */
+/* Основной перевод — без фона, светло-серый, не жирный */
 .meaning {
   font-size: 1.2rem;
-  font-weight: 500;
-  color: #e0e0e0;
-  background: rgba(255, 255, 255, 0.08);
-  padding: 8px 14px;
-  border-radius: 40px;
+  font-weight: 400;
+  color: #cccccc;
+  padding: 0 12px;
   margin-bottom: 10px;
   max-width: 95%;
   word-wrap: break-word;
@@ -241,8 +239,9 @@ body {
 
 /* Дополнительные переводы */
 .extra-meanings {
-  font-size: 0.85rem;
-  color: #aaa;
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: #999999;
   margin-top: 6px;
   line-height: 1.35;
   max-width: 95%;
