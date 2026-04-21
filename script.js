@@ -1,6 +1,8 @@
 let fullDictionary = [];
 let activeLevel = 1;
-let learnedIds = new Set();
+let learnedIds = new Set();       // Полностью выученные (навсегда)
+let yellowCards = new Map();      // Карточки, которые скоро вернутся (жёлтые)
+let redCards = new Map();         // Карточки, которые скоро вернутся (красные)
 
 let currentCard = null;
 let currentLevelWords = [];
@@ -15,25 +17,80 @@ async function loadDictionary() {
     const response = await fetch('hsk.json');
     fullDictionary = await response.json();
     
-    // Загружаем сохранённые выученные слова из localStorage
-    const saved = localStorage.getItem('chincards_learned');
-    if (saved) {
-      learnedIds = new Set(JSON.parse(saved));
-      console.log(`Загружено выученных слов: ${learnedIds.size}`);
+    // Загружаем данные из localStorage
+    const savedLearned = localStorage.getItem('chincards_learned');
+    if (savedLearned) {
+      learnedIds = new Set(JSON.parse(savedLearned));
     }
     
-    console.log(`Загружено слов всего: ${fullDictionary.length}`);
+    const savedYellow = localStorage.getItem('chincards_yellow');
+    if (savedYellow) {
+      const parsed = JSON.parse(savedYellow);
+      yellowCards = new Map(parsed.map(p => [p.id, new Date(p.until)]));
+    }
+    
+    const savedRed = localStorage.getItem('chincards_red');
+    if (savedRed) {
+      const parsed = JSON.parse(savedRed);
+      redCards = new Map(parsed.map(p => [p.id, new Date(p.until)]));
+    }
+    
+    console.log(`Загружено: выучено ${learnedIds.size}, жёлтых ${yellowCards.size}, красных ${redCards.size}`);
     initForLevel(activeLevel);
   } catch (err) {
     console.error('Ошибка загрузки hsk.json', err);
-    alert('Ошибка загрузки hsk.json! Проверьте, что файл есть в корне репозитория');
+    alert('Ошибка загрузки hsk.json!');
   }
+}
+
+// Сохранение всех данных
+function saveAllData() {
+  localStorage.setItem('chincards_learned', JSON.stringify([...learnedIds]));
+  
+  const yellowArray = Array.from(yellowCards.entries()).map(([id, date]) => ({ id, until: date.toISOString() }));
+  localStorage.setItem('chincards_yellow', JSON.stringify(yellowArray));
+  
+  const redArray = Array.from(redCards.entries()).map(([id, date]) => ({ id, until: date.toISOString() }));
+  localStorage.setItem('chincards_red', JSON.stringify(redArray));
+}
+
+// Проверка, вернулись ли карточки из отложенных
+function checkReturnedCards() {
+  const now = new Date();
+  
+  // Проверяем жёлтые карточки
+  for (let [id, untilDate] of yellowCards) {
+    if (untilDate <= now) {
+      yellowCards.delete(id);
+      console.log(`Карточка ${id} вернулась из жёлтого статуса`);
+    }
+  }
+  
+  // Проверяем красные карточки
+  for (let [id, untilDate] of redCards) {
+    if (untilDate <= now) {
+      redCards.delete(id);
+      console.log(`Карточка ${id} вернулась из красного статуса`);
+    }
+  }
+  
+  saveAllData();
 }
 
 // Инициализация для уровня
 function initForLevel(level) {
+  checkReturnedCards();
+  
+  // Берём все слова уровня, исключая:
+  // 1. Полностью выученные
+  // 2. Жёлтые (ещё не вернулись)
+  // 3. Красные (ещё не вернулись)
   const allLevelWords = fullDictionary.filter(w => w.level == level);
-  currentLevelWords = allLevelWords.filter(w => !learnedIds.has(w.id));
+  currentLevelWords = allLevelWords.filter(w => 
+    !learnedIds.has(w.id) && 
+    !yellowCards.has(w.id) && 
+    !redCards.has(w.id)
+  );
   
   updateAllStats();
   
@@ -43,7 +100,6 @@ function initForLevel(level) {
     return;
   }
   
-  // Перемешиваем слова
   currentLevelWords = shuffleArray([...currentLevelWords]);
   currentCardIndex = 0;
   currentCard = currentLevelWords[currentCardIndex];
@@ -53,6 +109,28 @@ function initForLevel(level) {
   if (cardEl) cardEl.classList.remove('flipped');
   
   updateCardDisplay();
+  updateCardColor();
+}
+
+// Обновление цвета карточки в зависимости от статуса
+function updateCardColor() {
+  const card = document.getElementById('flashcard');
+  if (!card || !currentCard) return;
+  
+  const cardFront = card.querySelector('.card-front');
+  const cardBack = card.querySelector('.card-back');
+  
+  // Сбрасываем классы
+  cardFront.classList.remove('yellow-card', 'red-card');
+  cardBack.classList.remove('yellow-card', 'red-card');
+  
+  if (yellowCards.has(currentCard.id)) {
+    cardFront.classList.add('yellow-card');
+    cardBack.classList.add('yellow-card');
+  } else if (redCards.has(currentCard.id)) {
+    cardFront.classList.add('red-card');
+    cardBack.classList.add('red-card');
+  }
 }
 
 // Перемешивание
@@ -105,21 +183,21 @@ function updateCardDisplay() {
       extraEl.innerHTML = '';
     }
   }
+  
+  updateCardColor();
 }
 
-// Обновление счётчиков (только два)
+// Обновление счётчиков
 function updateAllStats() {
-  // Счётчик "осталось" для текущего уровня
   const allCurrentLevelWords = fullDictionary.filter(w => w.level == activeLevel);
-  const totalInLevel = allCurrentLevelWords.length;
-  const learnedInLevel = allCurrentLevelWords.filter(w => learnedIds.has(w.id)).length;
-  const leftInLevel = totalInLevel - learnedInLevel;
+  const availableWords = allCurrentLevelWords.filter(w => 
+    !learnedIds.has(w.id) && 
+    !yellowCards.has(w.id) && 
+    !redCards.has(w.id)
+  );
   
-  document.getElementById('cardsLeft').innerText = leftInLevel;
-  
-  // Общий счётчик "уже знаю" (все выученные слова по всем уровням)
-  const totalLearnedAllLevels = fullDictionary.filter(w => learnedIds.has(w.id)).length;
-  document.getElementById('totalLearned').innerText = totalLearnedAllLevels;
+  document.getElementById('cardsLeft').innerText = availableWords.length;
+  document.getElementById('totalLearned').innerText = learnedIds.size;
 }
 
 // Озвучивание
@@ -145,7 +223,31 @@ function flipCard() {
   }
 }
 
-// Свайп влево (не знаю)
+// Получение следующей даты на основе статуса и попытки
+function getNextReturnDate(status, attempt) {
+  const now = new Date();
+  let daysToAdd = 0;
+  
+  if (status === 'yellow') {
+    // Первое "знаю" → 2 дня
+    daysToAdd = 2;
+  } else if (status === 'red') {
+    // Второе "знаю" → 7 дней
+    daysToAdd = 7;
+  } else if (status === 'review') {
+    // Повторное изучение (после полного выучивания) → случайно от 21 до 30 дней
+    daysToAdd = Math.floor(Math.random() * (30 - 21 + 1) + 21);
+  } else if (status === 'review2') {
+    // Ещё одно повторение → случайно от 30 до 60 дней
+    daysToAdd = Math.floor(Math.random() * (60 - 30 + 1) + 30);
+  }
+  
+  const nextDate = new Date(now);
+  nextDate.setDate(now.getDate() + daysToAdd);
+  return nextDate;
+}
+
+// Свайп влево (не знаю → оставляем, перемещаем в конец)
 function swipeLeft() {
   if (!currentCard || currentLevelWords.length <= 1) return;
   
@@ -164,13 +266,51 @@ function swipeLeft() {
   animateSwipe('left');
 }
 
-// Свайп вправо (знаю)
+// Свайп вправо (знаю → сложная логика интервалов)
 function swipeRight() {
   if (!currentCard) return;
   
-  learnedIds.add(currentCard.id);
-  localStorage.setItem('chincards_learned', JSON.stringify([...learnedIds]));
+  const wordId = currentCard.id;
+  let needsUpdate = true;
   
+  // Проверяем, в каком статусе сейчас слово
+  if (yellowCards.has(wordId)) {
+    // Жёлтый статус → переводим в красный на 7 дней
+    const nextDate = getNextReturnDate('red', 1);
+    redCards.set(wordId, nextDate);
+    yellowCards.delete(wordId);
+    console.log(`Слово ${wordId} стало КРАСНЫМ до ${nextDate.toLocaleDateString()}`);
+    
+  } else if (redCards.has(wordId)) {
+    // Красный статус → полностью выучено навсегда
+    learnedIds.add(wordId);
+    redCards.delete(wordId);
+    console.log(`Слово ${wordId} полностью ВЫУЧЕНО! +1 к счётчику`);
+    
+  } else if (learnedIds.has(wordId)) {
+    // Уже выучено → повторное изучение (рандомный возврат через 3-4 недели)
+    const nextDate = getNextReturnDate('review', 1);
+    // Проверяем, была ли уже карточка в красных на повторении
+    if (redCards.has(wordId)) {
+      // Второе и более повторение
+      const nextDate2 = getNextReturnDate('review2', 2);
+      redCards.set(wordId, nextDate2);
+    } else {
+      redCards.set(wordId, nextDate);
+    }
+    learnedIds.delete(wordId);
+    console.log(`Слово ${wordId} отправлено на ПОВТОРЕНИЕ до ${nextDate.toLocaleDateString()}`);
+    
+  } else {
+    // Обычное слово → отправляем в жёлтый статус на 2 дня
+    const nextDate = getNextReturnDate('yellow', 1);
+    yellowCards.set(wordId, nextDate);
+    console.log(`Слово ${wordId} стало ЖЁЛТЫМ до ${nextDate.toLocaleDateString()}`);
+  }
+  
+  saveAllData();
+  
+  // Удаляем слово из текущей ротации
   currentLevelWords.splice(currentCardIndex, 1);
   
   if (currentLevelWords.length === 0) {
