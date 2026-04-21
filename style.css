@@ -38,7 +38,7 @@ body {
   backdrop-filter: blur(20px);
   border-radius: 28px;
   padding: 10px 16px;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   width: 92%;
   max-width: 360px;
@@ -170,9 +170,22 @@ body {
   border: 2px solid #ff5555;
 }
 
-/* Фразовая карточка - голубая рамка */
+/* Фразовая карточка - яркая голубая рамка */
 .card-front.phrase, .card-back.phrase {
-  border: 3px solid #44aaff;
+  border: 4px solid #44aaff;
+  box-shadow: 0 0 12px rgba(68, 170, 255, 0.5);
+}
+
+/* Комбинация фразовой + жёлтой */
+.card-front.phrase.yellow, .card-back.phrase.yellow {
+  border: 4px solid #ffaa33;
+  box-shadow: 0 0 12px rgba(255, 170, 51, 0.5);
+}
+
+/* Комбинация фразовой + красной */
+.card-front.phrase.red, .card-back.phrase.red {
+  border: 4px solid #ff5555;
+  box-shadow: 0 0 12px rgba(255, 85, 85, 0.5);
 }
 
 .chinese-char {
@@ -198,6 +211,7 @@ body {
   max-width: 95%;
   word-wrap: break-word;
   background: transparent;
+  padding: 0;
 }
 
 .breakdown {
@@ -206,9 +220,8 @@ body {
   color: #88aaff;
   margin-top: 8px;
   padding: 6px 12px;
-  background: rgba(68, 170, 255, 0.1);
-  border-radius: 16px;
   max-width: 95%;
+  background: transparent;
 }
 
 .card-container.swipe-left .card {
