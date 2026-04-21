@@ -379,4 +379,99 @@ function swipeRight() {
       const nextDate = getNextReturnDate('review');
       redCards.set(id, nextDate);
       learnedIds.delete(id);
-   
+    } else {
+      const nextDate = getNextReturnDate('yellow');
+      yellowCards.set(id, nextDate);
+    }
+  }
+  
+  saveAllData();
+  initForLevel(activeLevel);
+  animateSwipe('right');
+}
+
+function animateSwipe(direction) {
+  const container = document.querySelector('.card-container');
+  if (!container) return;
+  container.classList.add(`swipe-${direction}`);
+  setTimeout(() => {
+    container.classList.remove(`swipe-${direction}`);
+  }, 300);
+}
+
+function attachTouchEvents() {
+  const container = document.querySelector('.card-container');
+  if (!container) return;
+  
+  container.addEventListener('touchstart', (e) => {
+    touchStartX = e.touches[0].clientX;
+    isSwiping = true;
+  }, { passive: false });
+  
+  container.addEventListener('touchmove', (e) => {
+    if (!isSwiping) return;
+    const deltaX = e.touches[0].clientX - touchStartX;
+    if (Math.abs(deltaX) > 10) e.preventDefault();
+  }, { passive: false });
+  
+  container.addEventListener('touchend', (e) => {
+    if (!isSwiping) return;
+    const deltaX = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(deltaX) > 50) {
+      if (deltaX > 0) swipeRight();
+      else swipeLeft();
+    }
+    isSwiping = false;
+  });
+  
+  let mouseStartX = 0;
+  container.addEventListener('mousedown', (e) => {
+    mouseStartX = e.clientX;
+    isSwiping = true;
+  });
+  container.addEventListener('mouseup', (e) => {
+    if (!isSwiping) return;
+    const deltaX = e.clientX - mouseStartX;
+    if (Math.abs(deltaX) > 50) {
+      if (deltaX > 0) swipeRight();
+      else swipeLeft();
+    }
+    isSwiping = false;
+  });
+}
+
+function setupLevelSwitcher() {
+  const btns = document.querySelectorAll('.level-btn');
+  btns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const level = parseInt(btn.dataset.level);
+      if (level === activeLevel) return;
+      activeLevel = level;
+      btns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      initForLevel(activeLevel);
+    });
+  });
+}
+
+function initSpeech() {
+  if (window.speechSynthesis) {
+    const dummy = new SpeechSynthesisUtterance('');
+    window.speechSynthesis.speak(dummy);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadDictionary();
+  setupLevelSwitcher();
+  attachTouchEvents();
+  initSpeech();
+  
+  const card = document.getElementById('flashcard');
+  if (card) {
+    card.addEventListener('click', (e) => {
+      e.stopPropagation();
+      flipCard();
+    });
+  }
+});
