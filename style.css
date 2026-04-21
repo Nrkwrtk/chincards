@@ -13,7 +13,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 12px;
+  padding: 16px;
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
   padding-left: env(safe-area-inset-left);
@@ -35,25 +35,24 @@ body {
   align-items: center;
 }
 
-/* Тёмная плашка сверху — придвинута к карточке */
+/* Тёмная плашка сверху */
 .header {
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(20px);
   border-radius: 28px;
-  padding: 8px 14px;
-  margin-bottom: 8px;
+  padding: 10px 16px;
+  margin-bottom: 20px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   width: 92%;
   max-width: 360px;
 }
 
-/* Строка с HSK и кнопками */
 .level-row {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 8px;
-  gap: 8px;
+  margin-bottom: 10px;
+  gap: 10px;
 }
 
 .level-label {
@@ -66,21 +65,19 @@ body {
   white-space: nowrap;
 }
 
-/* Контейнер с кнопками */
 .level-switch {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: nowrap;
 }
 
-/* Кнопки уровней */
 .level-btn {
   background: rgba(255, 255, 255, 0.12);
   border: none;
-  width: 32px;
-  height: 32px;
-  border-radius: 32px;
-  font-size: 14px;
+  width: 34px;
+  height: 34px;
+  border-radius: 34px;
+  font-size: 15px;
   font-weight: 600;
   color: white;
   opacity: 0.8;
@@ -96,36 +93,34 @@ body {
   box-shadow: 0 2px 8px rgba(255, 111, 44, 0.25);
 }
 
-/* Статистика */
 .stats-container {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   justify-content: center;
 }
 
 .stat-card {
   flex: 1;
   background: rgba(0, 0, 0, 0.4);
-  border-radius: 18px;
-  padding: 4px 8px;
+  border-radius: 20px;
+  padding: 6px 10px;
   text-align: center;
 }
 
 .stat-value {
   display: block;
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 800;
   color: #ff9f4a;
   line-height: 1.2;
 }
 
 .stat-label {
-  font-size: 9px;
+  font-size: 10px;
   color: rgba(255, 255, 255, 0.6);
   letter-spacing: 0.3px;
 }
 
-/* Контейнер карточки */
 .card-container {
   perspective: 1200px;
   margin: 0;
@@ -139,7 +134,6 @@ body {
   width: 100%;
 }
 
-/* Карточка */
 .card {
   width: 92%;
   max-width: 360px;
@@ -157,7 +151,6 @@ body {
   transform: rotateY(180deg);
 }
 
-/* Общий стиль для обеих сторон */
 .card-front, .card-back {
   position: absolute;
   width: 100%;
@@ -168,7 +161,6 @@ body {
   transition: all 0.3s ease;
 }
 
-/* Лицевая сторона */
 .card-front {
   background: linear-gradient(145deg, #1a1a2a, #252540);
   transform: rotateY(0deg);
@@ -205,26 +197,20 @@ body {
 /* Фразовая карточка - голубая рамка */
 .card-front.phrase-card {
   border: 3px solid #44aaff;
-  box-shadow: 0 0 15px rgba(68, 170, 255, 0.3);
 }
 
 .card-back.phrase-card {
   border: 3px solid #44aaff;
-  box-shadow: 0 0 15px rgba(68, 170, 255, 0.3);
 }
 
-/* Комбинации */
 .card-front.phrase-card.yellow-card {
   border: 3px solid #ffaa33;
-  box-shadow: 0 0 15px rgba(255, 170, 51, 0.3);
 }
 
 .card-front.phrase-card.red-card {
   border: 3px solid #ff5555;
-  box-shadow: 0 0 15px rgba(255, 85, 85, 0.3);
 }
 
-/* Оборотная сторона */
 .card-back {
   background: linear-gradient(145deg, #1e1e30, #282844);
   transform: rotateY(180deg);
@@ -237,39 +223,28 @@ body {
   overflow-y: auto;
 }
 
-/* Контент на обороте */
-.card-back-content {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Иероглиф/фраза */
+/* Крупный иероглиф как раньше */
 .chinese-char {
-  font-size: clamp(1.8rem, 7vw, 3.5rem);
+  font-size: clamp(3rem, 12vw, 5rem);
   font-weight: 600;
   color: #f0f0f0;
-  line-height: 1.3;
+  line-height: 1.2;
   word-break: break-word;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-/* Пиньинь */
 .pinyin {
-  font-size: 1.3rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: #ffaa66;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
   text-align: center;
   word-break: break-word;
   padding: 0 8px;
 }
 
-/* Основной перевод */
 .meaning {
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   font-weight: 400;
   color: #cccccc;
   padding: 0 12px;
@@ -279,17 +254,17 @@ body {
   word-break: break-word;
   white-space: normal;
   line-height: 1.4;
+  background: transparent;
 }
 
-/* Разбор по словам (для фраз) */
 .breakdown {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   font-weight: 400;
   color: #88aaff;
-  margin-top: 6px;
-  padding: 6px 10px;
+  margin-top: 8px;
+  padding: 6px 12px;
   background: rgba(68, 170, 255, 0.1);
-  border-radius: 14px;
+  border-radius: 16px;
   max-width: 95%;
   word-wrap: break-word;
   word-break: break-word;
@@ -297,7 +272,6 @@ body {
   text-align: center;
 }
 
-/* Анимации свайпов */
 .card-container.swipe-left .card {
   transform: translateX(-120%) rotate(-15deg);
   opacity: 0;
@@ -310,7 +284,6 @@ body {
   transition: transform 0.3s ease, opacity 0.2s;
 }
 
-/* Запрещаем скролл страницы */
 body {
   overflow: hidden;
   position: fixed;
