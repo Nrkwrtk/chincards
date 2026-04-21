@@ -1,22 +1,28 @@
 let fullDictionary = [];
 let activeLevel = 1;
+
+// Статусы слов
 let learnedIds = new Set();
-let yellowCards = new Map();
+let yellowCards = new Map();   // id -> дата возврата
 let redCards = new Map();
 
+// Статусы фраз
 let phrasesDatabase = [];
 let learnedPhrasesIds = new Set();
 let yellowPhrases = new Map();
 let redPhrases = new Map();
 
+// Текущая "колода" слов (только доступные, перемешанные)
+let currentDeck = [];          // массив слов
+let currentDeckIndex = 0;      // позиция в колоде
+let cardsSinceLastPhrase = 0;   // сколько слов показано после последней фразы
+
 let currentCard = null;
-let currentLevelWords = [];
-let currentIndex = 0;
 let isFlipped = false;
 let touchStartX = 0;
 let isSwiping = false;
-let wordCounter = 0;
 
+// ========== ФРАЗЫ ==========
 const phrasesList = [
   { text: "你好", pinyin: "nǐ hǎo", translation: "Здравствуйте", breakdown: "你 (ты) + 好 (хорошо)" },
   { text: "您好", pinyin: "nín hǎo", translation: "Здравствуйте (уважительно)", breakdown: "您 (Вы) + 好" },
@@ -53,6 +59,7 @@ const phrasesList = [
   { text: "昨天", pinyin: "zuó tiān", translation: "Вчера", breakdown: "昨 + 天" }
 ];
 
+// ========== ЗАГРУЗКА ==========
 async function loadDictionary() {
   try {
     const response = await fetch('hsk.json');
@@ -134,43 +141,74 @@ function getNextDate(type) {
   return d;
 }
 
+// Построение колоды из доступных слов (исключая выученные, жёлтые, красные)
+function buildDeck() {
+  const allLevelWords = fullDictionary.filter(w => w.level == activeLevel);
+  const available = allLevelWords.filter(w => !learnedIds.has(w.id) && !yellowCards.has(w.id) && !redCards.has(w.id));
+  return shuffleArray([...available]);
+}
+
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// Инициализация уровня: создаём перемешанную колоду, сбрасываем индекс и счётчик фраз
 function initLevel(level) {
   activeLevel = level;
   checkReturns();
-  wordCounter = 0;
-  
-  const all = fullDictionary.filter(w => w.level == level);
-  currentLevelWords = all.filter(w => !learnedIds.has(w.id) && !yellowCards.has(w.id) && !redCards.has(w.id));
-  currentLevelWords = shuffle(currentLevelWords);
-  currentIndex = 0;
-  
+  currentDeck = buildDeck();
+  currentDeckIndex = 0;
+  cardsSinceLastPhrase = 0;
   updateStats();
-  nextCard();
+  loadNextCard();
 }
 
-function nextCard() {
+// Загрузить следующую карточку (слово или фразу)
+function loadNextCard() {
   const availablePhrases = getAvailablePhrases();
   
-  if (wordCounter >= 4 && availablePhrases.length > 0) {
-    const randomPhrase = availablePhrases[Math.floor(Math.random() * availablePhrases.length)];
-    currentCard = randomPhrase;
-    wordCounter = 0;
-    console.log("ФРАЗА:", randomPhrase.text);
-  } else if (currentLevelWords.length > 0) {
-    if (currentIndex >= currentLevelWords.length) currentIndex = 0;
-    currentCard = currentLevelWords[currentIndex];
-    wordCounter++;
-    currentIndex++;
-  } else if (availablePhrases.length > 0) {
-    currentCard = availablePhrases[Math.floor(Math.random() * availablePhrases.length)];
-    wordCounter = 0;
+  // Если колода закончилась, пересоздаём её (новая перемешанная)
+  if (currentDeckIndex >= currentDeck.length) {
+    currentDeck = buildDeck();
+    currentDeckIndex = 0;
+  }
+  
+  // Решаем, показывать фразу или слово
+  let showPhrase = false;
+  if (availablePhrases.length > 0 && cardsSinceLastPhrase >= 5) {
+    showPhrase = true;
+  }
+  
+  if (showPhrase) {
+    // Берём случайную фразу
+    const randomIndex = Math.floor(Math.random() * availablePhrases.length);
+    currentCard = availablePhrases[randomIndex];
+    cardsSinceLastPhrase = 0;
+    console.log("ФРАЗА:", currentCard.text);
   } else {
-    currentCard = null;
+    // Если нет доступных слов, показываем фразу
+    if (currentDeck.length === 0 && availablePhrases.length > 0) {
+      const randomIndex = Math.floor(Math.random() * availablePhrases.length);
+      currentCard = availablePhrases[randomIndex];
+      cardsSinceLastPhrase = 0;
+      console.log("ФРАЗА (нет слов):", currentCard.text);
+    } else if (currentDeck.length > 0 && currentDeckIndex < currentDeck.length) {
+      currentCard = currentDeck[currentDeckIndex];
+      currentDeckIndex++;
+      cardsSinceLastPhrase++;
+      console.log("СЛОВО:", currentCard.hanzi, `(${currentDeckIndex}/${currentDeck.length})`, `До фразы: ${5 - cardsSinceLastPhrase}`);
+    } else {
+      currentCard = null;
+    }
   }
   
   isFlipped = false;
-  const el = document.getElementById('flashcard');
-  if (el) el.classList.remove('flipped');
+  const cardEl = document.getElementById('flashcard');
+  if (cardEl) cardEl.classList.remove('flipped');
   
   updateDisplay();
   updateCardStyle();
@@ -207,19 +245,11 @@ function updateCardStyle() {
   }
 }
 
-function shuffle(arr) {
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
-}
-
 function updateDisplay() {
   if (!currentCard) {
     document.getElementById('chineseChar').innerText = '🎉';
     document.getElementById('pinyin').innerHTML = '';
-    document.getElementById('meaning').innerHTML = 'Всё выучено!';
+    document.getElementById('meaning').innerHTML = 'Все слова и фразы выучены!';
     document.getElementById('breakdown').innerHTML = '';
     return;
   }
@@ -267,6 +297,7 @@ function flip() {
   }
 }
 
+// Свайп влево (не знаю) - понижаем статус
 function onSwipeLeft() {
   if (!currentCard) return;
   
@@ -277,6 +308,7 @@ function onSwipeLeft() {
     } else if (yellowPhrases.has(currentCard.id)) {
       yellowPhrases.delete(currentCard.id);
     }
+    // Обычная фраза без статуса — ничего не делаем, просто убираем
   } else {
     if (redCards.has(currentCard.id)) {
       redCards.delete(currentCard.id);
@@ -287,10 +319,12 @@ function onSwipeLeft() {
   }
   
   saveAll();
-  initLevel(activeLevel);
+  // После изменения статуса перестраиваем колоду, но не сбрасываем счётчик фраз
+  rebuildDeckAndContinue();
   animate('left');
 }
 
+// Свайп вправо (знаю) - повышаем статус
 function onSwipeRight() {
   if (!currentCard) return;
   
@@ -323,8 +357,29 @@ function onSwipeRight() {
   }
   
   saveAll();
-  initLevel(activeLevel);
+  rebuildDeckAndContinue();
   animate('right');
+}
+
+// Перестраивает колоду, сохраняя позицию, если текущее слово ещё в колоде
+function rebuildDeckAndContinue() {
+  const newDeck = buildDeck();
+  if (currentCard && !currentCard.isPhrase) {
+    const oldId = currentCard.id;
+    const newIndex = newDeck.findIndex(w => w.id === oldId);
+    if (newIndex !== -1) {
+      currentDeck = newDeck;
+      currentDeckIndex = newIndex;
+    } else {
+      currentDeck = newDeck;
+      currentDeckIndex = 0;
+    }
+  } else {
+    currentDeck = newDeck;
+    currentDeckIndex = 0;
+  }
+  // Счётчик фраз не сбрасываем — фразы продолжают выпадать ритмично
+  loadNextCard();
 }
 
 function animate(dir) {
