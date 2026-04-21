@@ -151,11 +151,11 @@ function initLevel(level) {
 function nextCard() {
   const availablePhrases = getAvailablePhrases();
   
-  // Каждые 4 слова показываем фразу
   if (wordCounter >= 4 && availablePhrases.length > 0) {
     const randomPhrase = availablePhrases[Math.floor(Math.random() * availablePhrases.length)];
     currentCard = randomPhrase;
     wordCounter = 0;
+    console.log("ФРАЗА:", randomPhrase.text);
   } else if (currentLevelWords.length > 0) {
     if (currentIndex >= currentLevelWords.length) currentIndex = 0;
     currentCard = currentLevelWords[currentIndex];
