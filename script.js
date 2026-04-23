@@ -59,24 +59,11 @@ const phrasesList = [
 
 async function loadDictionary() {
   try {
-    console.log('1. Начинаю загрузку HSK14ruen.json...');
+    console.log('Загрузка HSK14ruen.json...');
     const response = await fetch('HSK14ruen.json');
-    console.log('2. Ответ получен, статус:', response.status);
-    
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-    
-    const text = await response.text();
-    console.log('3. Получено символов:', text.length);
-    console.log('4. Первые 100 символов:', text.substring(0, 100));
-    
-    fullDictionary = JSON.parse(text);
-    console.log('5. Успешно распарсено! Количество слов:', fullDictionary.length);
-    
-    if (fullDictionary.length === 0) {
-      throw new Error('Файл пуст');
-    }
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    fullDictionary = await response.json();
+    console.log(`Загружено слов: ${fullDictionary.length}`);
     
     const saved = localStorage.getItem('chincards_learned');
     if (saved) learnedIds = new Set(JSON.parse(saved));
@@ -94,9 +81,7 @@ async function loadDictionary() {
     }
     
     for (let i = 0; i < fullDictionary.length; i++) {
-      if (!fullDictionary[i].id) {
-        fullDictionary[i].id = i + 1;
-      }
+      if (!fullDictionary[i].id) fullDictionary[i].id = i + 1;
     }
     
     for (let i = 0; i < phrasesList.length; i++) {
@@ -124,8 +109,8 @@ async function loadDictionary() {
     
     initLevel(activeLevel);
   } catch(e) {
-    console.error('ОШИБКА:', e);
-    alert(`Ошибка загрузки HSK14ruen.json!\n\n${e.message}\n\nОткройте консоль (F12) для подробностей`);
+    console.error(e);
+    alert('Ошибка загрузки HSK14ruen.json!');
     fullDictionary = [
       { hanzi: "测试", level: 1, pinyin: "cè shì", id: 1, translations: { rus: "тест", eng: "test" } }
     ];
@@ -204,15 +189,20 @@ function initLevel(level) {
 
 function loadNextCard() {
   const availablePhrases = getAvailablePhrases();
+  const hasAvailableWords = !isPhraseOnlyMode && currentDeck.length > 0 && currentDeckIndex < currentDeck.length;
   
   if (!isPhraseOnlyMode && (currentDeckIndex >= currentDeck.length || currentDeck.length === 0)) {
     currentDeck = buildDeck();
     currentDeckIndex = 0;
   }
   
-  const showPhrase = isPhraseOnlyMode || (availablePhrases.length > 0 && cardsSinceLastPhrase >= 5);
+  const showPhrase = !isPhraseOnlyMode && availablePhrases.length > 0 && cardsSinceLastPhrase >= 5 && hasAvailableWords;
   
-  if (showPhrase && availablePhrases.length > 0) {
+  if (isPhraseOnlyMode && availablePhrases.length > 0) {
+    const randomIndex = Math.floor(Math.random() * availablePhrases.length);
+    currentCard = availablePhrases[randomIndex];
+    cardsSinceLastPhrase = 0;
+  } else if (showPhrase) {
     const randomIndex = Math.floor(Math.random() * availablePhrases.length);
     currentCard = availablePhrases[randomIndex];
     cardsSinceLastPhrase = 0;
