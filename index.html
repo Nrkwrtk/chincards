@@ -15,6 +15,13 @@
 <body ontouchstart="">
   <div class="app">
     <div class="header">
+      <!-- 1. Переключатель языков (вверху) -->
+      <div class="lang-switch">
+        <button data-lang="ru" class="lang-btn active">🇷🇺 RU</button>
+        <button data-lang="en" class="lang-btn">🇬🇧 EN</button>
+      </div>
+      
+      <!-- 2. Выбор уровней HSK -->
       <div class="level-row">
         <span class="level-label">HSK</span>
         <div class="level-switch">
@@ -26,12 +33,7 @@
         </div>
       </div>
       
-      <!-- Переключатель языка -->
-      <div class="lang-switch">
-        <button data-lang="ru" class="lang-btn active">🇷🇺 RU</button>
-        <button data-lang="en" class="lang-btn">🇬🇧 EN</button>
-      </div>
-      
+      <!-- 3. Счётчики -->
       <div class="stats-container">
         <div class="stat-card">
           <span class="stat-value" id="cardsLeft">0</span>
