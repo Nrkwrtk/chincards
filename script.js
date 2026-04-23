@@ -1,13 +1,12 @@
 let fullDictionary = [];
 let activeLevel = 1;
-let isPhraseOnlyMode = false;  // Режим только фраз
+let isPhraseOnlyMode = false;
+let currentLanguage = 'ru';
 
-// Статусы слов (HSK)
 let learnedIds = new Set();
 let yellowCards = new Map();
 let redCards = new Map();
 
-// Статусы фраз
 let phraseStatus = new Map();
 let learnedPhrasesIds = new Set();
 
@@ -22,47 +21,45 @@ let isFlipped = false;
 let touchStartX = 0;
 let isSwiping = false;
 
-// ========== ФРАЗЫ ==========
 const phrasesList = [
-  { text: "你好", pinyin: "nǐ hǎo", translation: "Здравствуйте", breakdown: "你 (ты) + 好 (хорошо)" },
-  { text: "您好", pinyin: "nín hǎo", translation: "Здравствуйте (уважительно)", breakdown: "您 (Вы) + 好" },
-  { text: "早上好", pinyin: "zǎo shang hǎo", translation: "Доброе утро", breakdown: "早上 (утро) + 好" },
-  { text: "晚上好", pinyin: "wǎn shang hǎo", translation: "Добрый вечер", breakdown: "晚上 (вечер) + 好" },
-  { text: "晚安", pinyin: "wǎn ān", translation: "Спокойной ночи", breakdown: "晚 (вечер) + 安 (спокойствие)" },
-  { text: "再见", pinyin: "zài jiàn", translation: "До свидания", breakdown: "再 (снова) + 见 (видеть)" },
-  { text: "谢谢", pinyin: "xiè xie", translation: "Спасибо", breakdown: "谢 (благодарить)" },
-  { text: "不客气", pinyin: "bù kè qi", translation: "Пожалуйста", breakdown: "不 (не) + 客气 (вежливый)" },
-  { text: "对不起", pinyin: "duì bu qǐ", translation: "Извините", breakdown: "对 (правильно) + 不起 (не получается)" },
-  { text: "没关系", pinyin: "méi guān xi", translation: "Ничего страшного", breakdown: "没 (нет) + 关系 (связи)" },
-  { text: "你好吗", pinyin: "nǐ hǎo ma", translation: "Как дела?", breakdown: "你 + 好 + 吗 (вопрос)" },
-  { text: "我很好", pinyin: "wǒ hěn hǎo", translation: "У меня всё хорошо", breakdown: "我 (я) + 很 (очень) + 好" },
-  { text: "你叫什么名字", pinyin: "nǐ jiào shén me míng zi", translation: "Как тебя зовут?", breakdown: "你 + 叫 (звать) + 什么 (что) + 名字 (имя)" },
-  { text: "我不知道", pinyin: "wǒ bù zhī dào", translation: "Я не знаю", breakdown: "我 + 不 + 知道 (знать)" },
-  { text: "我明白了", pinyin: "wǒ míng bai le", translation: "Я понял", breakdown: "我 + 明白 (понять) + 了" },
-  { text: "在左边", pinyin: "zài zuǒ biān", translation: "Слева", breakdown: "在 + 左 (левый) + 边 (сторона)" },
-  { text: "在右边", pinyin: "zài yòu biān", translation: "Справа", breakdown: "在 + 右 (правый) + 边" },
-  { text: "一直走", pinyin: "yī zhí zǒu", translation: "Идите прямо", breakdown: "一 (один) + 直 (прямой) + 走 (идти)" },
-  { text: "向左转", pinyin: "xiàng zuǒ zhuǎn", translation: "Поверните налево", breakdown: "向 + 左 + 转" },
-  { text: "向右转", pinyin: "xiàng yòu zhuǎn", translation: "Поверните направо", breakdown: "向 + 右 + 转" },
-  { text: "多少钱", pinyin: "duō shao qián", translation: "Сколько стоит?", breakdown: "多少 (сколько) + 钱 (деньги)" },
-  { text: "太贵了", pinyin: "tài guì le", translation: "Слишком дорого", breakdown: "太 (слишком) + 贵 (дорогой) + 了" },
-  { text: "我要这个", pinyin: "wǒ yào zhè ge", translation: "Я хочу это", breakdown: "我 + 要 + 这个" },
-  { text: "加油", pinyin: "jiā yóu", translation: "Держись!/Давай!", breakdown: "加 + 油" },
-  { text: "慢慢来", pinyin: "màn man lái", translation: "Не торопись", breakdown: "慢慢 + 来" },
-  { text: "真的吗", pinyin: "zhēn de ma", translation: "Правда?", breakdown: "真的 + 吗" },
-  { text: "太好了", pinyin: "tài hǎo le", translation: "Отлично!", breakdown: "太 + 好 + 了" },
-  { text: "小心", pinyin: "xiǎo xīn", translation: "Осторожно!", breakdown: "小 (маленький) + 心 (сердце)" },
-  { text: "等一下", pinyin: "děng yī xià", translation: "Подожди", breakdown: "等 + 一下" },
-  { text: "现在几点", pinyin: "xiàn zài jǐ diǎn", translation: "Который час?", breakdown: "现在 (сейчас) + 几点" },
-  { text: "今天", pinyin: "jīn tiān", translation: "Сегодня", breakdown: "今 + 天" },
-  { text: "明天", pinyin: "míng tiān", translation: "Завтра", breakdown: "明 + 天" },
-  { text: "昨天", pinyin: "zuó tiān", translation: "Вчера", breakdown: "昨 + 天" }
+  { text: "你好", pinyin: "nǐ hǎo", translation_ru: "Здравствуйте", translation_en: "Hello", breakdown: "你 (ты) + 好 (хорошо)" },
+  { text: "您好", pinyin: "nín hǎo", translation_ru: "Здравствуйте (уважительно)", translation_en: "Hello (respectful)", breakdown: "您 (Вы) + 好" },
+  { text: "早上好", pinyin: "zǎo shang hǎo", translation_ru: "Доброе утро", translation_en: "Good morning", breakdown: "早上 (утро) + 好" },
+  { text: "晚上好", pinyin: "wǎn shang hǎo", translation_ru: "Добрый вечер", translation_en: "Good evening", breakdown: "晚上 (вечер) + 好" },
+  { text: "晚安", pinyin: "wǎn ān", translation_ru: "Спокойной ночи", translation_en: "Good night", breakdown: "晚 (вечер) + 安 (спокойствие)" },
+  { text: "再见", pinyin: "zài jiàn", translation_ru: "До свидания", translation_en: "Goodbye", breakdown: "再 (снова) + 见 (видеть)" },
+  { text: "谢谢", pinyin: "xiè xie", translation_ru: "Спасибо", translation_en: "Thank you", breakdown: "谢 (благодарить)" },
+  { text: "不客气", pinyin: "bù kè qi", translation_ru: "Пожалуйста", translation_en: "You're welcome", breakdown: "不 (не) + 客气 (вежливый)" },
+  { text: "对不起", pinyin: "duì bu qǐ", translation_ru: "Извините", translation_en: "Sorry", breakdown: "对 (правильно) + 不起 (не получается)" },
+  { text: "没关系", pinyin: "méi guān xi", translation_ru: "Ничего страшного", translation_en: "No problem", breakdown: "没 (нет) + 关系 (связи)" },
+  { text: "你好吗", pinyin: "nǐ hǎo ma", translation_ru: "Как дела?", translation_en: "How are you?", breakdown: "你 + 好 + 吗 (вопрос)" },
+  { text: "我很好", pinyin: "wǒ hěn hǎo", translation_ru: "У меня всё хорошо", translation_en: "I'm fine", breakdown: "我 (я) + 很 (очень) + 好" },
+  { text: "你叫什么名字", pinyin: "nǐ jiào shén me míng zi", translation_ru: "Как тебя зовут?", translation_en: "What's your name?", breakdown: "你 + 叫 (звать) + 什么 (что) + 名字 (имя)" },
+  { text: "我不知道", pinyin: "wǒ bù zhī dào", translation_ru: "Я не знаю", translation_en: "I don't know", breakdown: "我 + 不 + 知道 (знать)" },
+  { text: "我明白了", pinyin: "wǒ míng bai le", translation_ru: "Я понял", translation_en: "I understand", breakdown: "我 + 明白 (понять) + 了" },
+  { text: "在左边", pinyin: "zài zuǒ biān", translation_ru: "Слева", translation_en: "On the left", breakdown: "在 + 左 (левый) + 边 (сторона)" },
+  { text: "在右边", pinyin: "zài yòu biān", translation_ru: "Справа", translation_en: "On the right", breakdown: "在 + 右 (правый) + 边" },
+  { text: "一直走", pinyin: "yī zhí zǒu", translation_ru: "Идите прямо", translation_en: "Go straight", breakdown: "一 (один) + 直 (прямой) + 走 (идти)" },
+  { text: "向左转", pinyin: "xiàng zuǒ zhuǎn", translation_ru: "Поверните налево", translation_en: "Turn left", breakdown: "向 + 左 + 转" },
+  { text: "向右转", pinyin: "xiàng yòu zhuǎn", translation_ru: "Поверните направо", translation_en: "Turn right", breakdown: "向 + 右 + 转" },
+  { text: "多少钱", pinyin: "duō shao qián", translation_ru: "Сколько стоит?", translation_en: "How much is it?", breakdown: "多少 (сколько) + 钱 (деньги)" },
+  { text: "太贵了", pinyin: "tài guì le", translation_ru: "Слишком дорого", translation_en: "Too expensive", breakdown: "太 (слишком) + 贵 (дорогой) + 了" },
+  { text: "我要这个", pinyin: "wǒ yào zhè ge", translation_ru: "Я хочу это", translation_en: "I want this", breakdown: "我 + 要 + 这个" },
+  { text: "加油", pinyin: "jiā yóu", translation_ru: "Держись!/Давай!", translation_en: "Come on!/Keep it up!", breakdown: "加 + 油" },
+  { text: "慢慢来", pinyin: "màn man lái", translation_ru: "Не торопись", translation_en: "Take it slow", breakdown: "慢慢 + 来" },
+  { text: "真的吗", pinyin: "zhēn de ma", translation_ru: "Правда?", translation_en: "Really?", breakdown: "真的 + 吗" },
+  { text: "太好了", pinyin: "tài hǎo le", translation_ru: "Отлично!", translation_en: "Great!", breakdown: "太 + 好 + 了" },
+  { text: "小心", pinyin: "xiǎo xīn", translation_ru: "Осторожно!", translation_en: "Be careful", breakdown: "小 (маленький) + 心 (сердце)" },
+  { text: "等一下", pinyin: "děng yī xià", translation_ru: "Подожди", translation_en: "Wait a moment", breakdown: "等 + 一下" },
+  { text: "现在几点", pinyin: "xiàn zài jǐ diǎn", translation_ru: "Который час?", translation_en: "What time is it?", breakdown: "现在 (сейчас) + 几点" },
+  { text: "今天", pinyin: "jīn tiān", translation_ru: "Сегодня", translation_en: "Today", breakdown: "今 + 天" },
+  { text: "明天", pinyin: "míng tiān", translation_ru: "Завтра", translation_en: "Tomorrow", breakdown: "明 + 天" },
+  { text: "昨天", pinyin: "zuó tiān", translation_ru: "Вчера", translation_en: "Yesterday", breakdown: "昨 + 天" }
 ];
 
-// ========== ЗАГРУЗКА ==========
 async function loadDictionary() {
   try {
-    const response = await fetch('hsk.json');
+    const response = await fetch('HSK14ruen.json');
     fullDictionary = await response.json();
     
     const saved = localStorage.getItem('chincards_learned');
@@ -80,13 +77,20 @@ async function loadDictionary() {
       redCards = new Map(parsed.map(p => [p.id, new Date(p.until)]));
     }
     
+    for (let i = 0; i < fullDictionary.length; i++) {
+      if (!fullDictionary[i].id) {
+        fullDictionary[i].id = i + 1;
+      }
+    }
+    
     for (let i = 0; i < phrasesList.length; i++) {
       phrasesDatabase.push({
         id: `p_${i}`,
         isPhrase: true,
         text: phrasesList[i].text,
         pinyin: phrasesList[i].pinyin,
-        translation: phrasesList[i].translation,
+        translation_ru: phrasesList[i].translation_ru,
+        translation_en: phrasesList[i].translation_en,
         breakdown: phrasesList[i].breakdown
       });
     }
@@ -105,6 +109,7 @@ async function loadDictionary() {
     initLevel(activeLevel);
   } catch(e) {
     console.error(e);
+    alert('Ошибка загрузки HSK14ruen.json! Проверьте, что файл есть в корне репозитория');
   }
 }
 
@@ -134,12 +139,7 @@ function checkReturns() {
   const now = new Date();
   for (let [id, date] of yellowCards) if (date <= now) yellowCards.delete(id);
   for (let [id, date] of redCards) if (date <= now) redCards.delete(id);
-  
-  for (let [id, status] of phraseStatus) {
-    if (status.returnDate <= now) {
-      phraseStatus.delete(id);
-    }
-  }
+  for (let [id, status] of phraseStatus) if (status.returnDate <= now) phraseStatus.delete(id);
   saveAll();
 }
 
@@ -158,14 +158,10 @@ function getNextDateForWord(type) {
 }
 
 function buildDeck() {
-  if (isPhraseOnlyMode) {
-    return []; // В режиме только фраз колода слов пуста
-  }
+  if (isPhraseOnlyMode) return [];
   const allLevelWords = fullDictionary.filter(w => w.level == activeLevel);
   const available = allLevelWords.filter(w => !learnedIds.has(w.id) && !yellowCards.has(w.id) && !redCards.has(w.id));
-  const shuffled = shuffleArray([...available]);
-  console.log(`Построена колода: ${shuffled.length} слов`);
-  return shuffled;
+  return shuffleArray([...available]);
 }
 
 function shuffleArray(arr) {
@@ -177,50 +173,39 @@ function shuffleArray(arr) {
 }
 
 function initLevel(level) {
-  if (!isPhraseOnlyMode) {
-    activeLevel = level;
-  }
+  if (!isPhraseOnlyMode) activeLevel = level;
   checkReturns();
   currentDeck = buildDeck();
   currentDeckIndex = 0;
   cardsSinceLastPhrase = 0;
   updateStats();
   loadNextCard();
-  console.log(`${isPhraseOnlyMode ? 'РЕЖИМ ТОЛЬКО ФРАЗ' : 'Уровень ' + activeLevel} инициализирован`);
 }
 
 function loadNextCard() {
   const availablePhrases = getAvailablePhrases();
   
-  // Если колода закончилась или пустая, пересоздаём (только если не в режиме фраз)
   if (!isPhraseOnlyMode && (currentDeckIndex >= currentDeck.length || currentDeck.length === 0)) {
-    console.log("Колода закончилась, пересоздаём");
     currentDeck = buildDeck();
     currentDeckIndex = 0;
   }
   
-  // В режиме только фраз или если прошло 5 слов и есть фразы
   const showPhrase = isPhraseOnlyMode || (availablePhrases.length > 0 && cardsSinceLastPhrase >= 5);
   
   if (showPhrase && availablePhrases.length > 0) {
     const randomIndex = Math.floor(Math.random() * availablePhrases.length);
     currentCard = availablePhrases[randomIndex];
     cardsSinceLastPhrase = 0;
-    console.log("ФРАЗА:", currentCard.text);
   } else if (!isPhraseOnlyMode && currentDeck.length > 0 && currentDeckIndex < currentDeck.length) {
     currentCard = currentDeck[currentDeckIndex];
     currentDeckIndex++;
     cardsSinceLastPhrase++;
-    console.log(`СЛОВО ${currentDeckIndex}/${currentDeck.length}: ${currentCard.hanzi}, до фразы: ${5 - cardsSinceLastPhrase}`);
   } else if (availablePhrases.length > 0) {
-    // Если слов нет совсем, показываем фразу
     const randomIndex = Math.floor(Math.random() * availablePhrases.length);
     currentCard = availablePhrases[randomIndex];
     cardsSinceLastPhrase = 0;
-    console.log("ФРАЗА (нет слов):", currentCard.text);
   } else {
     currentCard = null;
-    console.log("Нет ни слов, ни фраз");
   }
   
   isFlipped = false;
@@ -269,7 +254,7 @@ function updateDisplay() {
   if (!currentCard) {
     document.getElementById('chineseChar').innerText = '🎉';
     document.getElementById('pinyin').innerHTML = '';
-    document.getElementById('meaning').innerHTML = 'Всё выучено!';
+    document.getElementById('meaning').innerHTML = 'Все слова и фразы выучены!';
     document.getElementById('breakdown').innerHTML = '';
     return;
   }
@@ -278,11 +263,12 @@ function updateDisplay() {
   document.getElementById('pinyin').innerHTML = currentCard.pinyin;
   
   if (currentCard.isPhrase) {
-    document.getElementById('meaning').innerHTML = currentCard.translation;
+    const translation = currentLanguage === 'ru' ? currentCard.translation_ru : currentCard.translation_en;
+    document.getElementById('meaning').innerHTML = translation;
     document.getElementById('breakdown').innerHTML = `📖 ${currentCard.breakdown}`;
   } else {
-    const meaning = currentCard.translations?.rus?.[0] || "(нет перевода)";
-    document.getElementById('meaning').innerHTML = meaning;
+    const translation = currentLanguage === 'ru' ? currentCard.translations.rus : currentCard.translations.eng;
+    document.getElementById('meaning').innerHTML = translation;
     document.getElementById('breakdown').innerHTML = '';
   }
   
@@ -319,7 +305,6 @@ function flip() {
 
 function onSwipeLeft() {
   if (!currentCard) return;
-  console.log("СВАЙП ВЛЕВО (не знаю):", currentCard.text || currentCard.hanzi);
   
   if (currentCard.isPhrase) {
     phraseStatus.delete(currentCard.id);
@@ -333,58 +318,41 @@ function onSwipeLeft() {
   }
   
   saveAll();
-  loadNextCard();
+  initLevel(activeLevel);
   animate('left');
 }
 
 function onSwipeRight() {
   if (!currentCard) return;
-  console.log("СВАЙП ВПРАВО (знаю):", currentCard.text || currentCard.hanzi);
   
   if (currentCard.isPhrase) {
     const currentStatus = phraseStatus.get(currentCard.id);
     const currentLevel = currentStatus ? currentStatus.level : 0;
     
     if (currentLevel === 0) {
-      phraseStatus.set(currentCard.id, {
-        level: 1,
-        returnDate: getNextDateForPhrase(0)
-      });
-      console.log("Фраза повышена до СИНЕЙ, скрыта на 2 дня");
+      phraseStatus.set(currentCard.id, { level: 1, returnDate: getNextDateForPhrase(0) });
     } else if (currentLevel === 1) {
-      phraseStatus.set(currentCard.id, {
-        level: 2,
-        returnDate: getNextDateForPhrase(1)
-      });
-      console.log("Фраза повышена до ТЁМНО-СИНЕЙ, скрыта на месяц");
+      phraseStatus.set(currentCard.id, { level: 2, returnDate: getNextDateForPhrase(1) });
     } else {
-      phraseStatus.set(currentCard.id, {
-        level: 2,
-        returnDate: getNextDateForPhrase(1)
-      });
-      console.log("Фраза уже тёмно-синяя, скрыта ещё на месяц");
+      phraseStatus.set(currentCard.id, { level: 2, returnDate: getNextDateForPhrase(1) });
     }
   } else {
     if (yellowCards.has(currentCard.id)) {
       yellowCards.delete(currentCard.id);
       redCards.set(currentCard.id, getNextDateForWord('red'));
-      console.log("Слово повышено до КРАСНОГО, скрыто на 7 дней");
     } else if (redCards.has(currentCard.id)) {
       learnedIds.add(currentCard.id);
       redCards.delete(currentCard.id);
-      console.log("Слово ВЫУЧЕНО навсегда! +1 к счётчику");
     } else if (learnedIds.has(currentCard.id)) {
       learnedIds.delete(currentCard.id);
       redCards.set(currentCard.id, getNextDateForWord('red'));
-      console.log("Слово отправлено на ПОВТОРЕНИЕ (красное)");
     } else {
       yellowCards.set(currentCard.id, getNextDateForWord('yellow'));
-      console.log("Слово повышено до ЖЁЛТОГО, скрыто на 2 дня");
     }
   }
   
   saveAll();
-  loadNextCard();
+  initLevel(activeLevel);
   animate('right');
 }
 
@@ -438,15 +406,12 @@ function setupLevels() {
       const value = btn.dataset.level;
       
       if (value === 'phrase') {
-        // Режим только фраз
         if (isPhraseOnlyMode) return;
         isPhraseOnlyMode = true;
-        // Снимаем активность со всех кнопок HSK
         document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         initLevel(null);
       } else {
-        // Обычный режим HSK
         const lvl = parseInt(value);
         if (!isPhraseOnlyMode && lvl === activeLevel) return;
         isPhraseOnlyMode = false;
@@ -459,10 +424,43 @@ function setupLevels() {
   });
 }
 
+function setupLanguage() {
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const lang = btn.dataset.lang;
+      if (lang === currentLanguage) return;
+      currentLanguage = lang;
+      document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      
+      const leftLabel = document.getElementById('leftLabel');
+      const learnedLabel = document.getElementById('learnedLabel');
+      if (currentLanguage === 'ru') {
+        leftLabel.innerText = 'осталось';
+        learnedLabel.innerText = 'уже знаю';
+      } else {
+        leftLabel.innerText = 'left';
+        learnedLabel.innerText = 'known';
+      }
+      
+      updateDisplay();
+    });
+  });
+}
+
+function initSpeech() {
+  if (window.speechSynthesis) {
+    const dummy = new SpeechSynthesisUtterance('');
+    window.speechSynthesis.speak(dummy);
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   loadDictionary();
   setupLevels();
+  setupLanguage();
   setupTouch();
+  initSpeech();
   
   const card = document.getElementById('flashcard');
   if (card) card.addEventListener('click', (e) => { e.stopPropagation(); flip(); });
