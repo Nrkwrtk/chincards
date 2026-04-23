@@ -44,7 +44,7 @@ body {
   max-width: 360px;
 }
 
-/* Переключатель языков — без тёмной подложки */
+/* Переключатель языков */
 .lang-switch {
   display: flex;
   justify-content: center;
@@ -87,7 +87,7 @@ body {
 
 .level-switch {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   flex-wrap: wrap;
   justify-content: center;
 }
@@ -95,15 +95,16 @@ body {
 .level-btn {
   background: rgba(255, 255, 255, 0.12);
   border: none;
-  width: 34px;
+  padding: 0 12px;
   height: 34px;
   border-radius: 34px;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   color: white;
   opacity: 0.8;
   transition: all 0.2s ease;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .level-btn.active {
