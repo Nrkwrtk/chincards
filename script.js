@@ -286,4 +286,195 @@ function updateDisplay() {
     document.getElementById('breakdown').innerHTML = '';
   }
   
-  update
+  updateCardStyle();
+}
+
+function updateStats() {
+  const allLevelWords = getWordsForLevel(activeLevel);
+  const left = allLevelWords.filter(w => !learnedIds.has(w.id) && !yellowCards.has(w.id) && !redCards.has(w.id)).length;
+  document.getElementById('cardsLeft').innerText = left;
+  document.getElementById('totalLearned').innerText = learnedIds.size;
+}
+
+function speak(t) {
+  if (!window.speechSynthesis) return;
+  const u = new SpeechSynthesisUtterance(t);
+  u.lang = 'zh-CN';
+  u.rate = 0.85;
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(u);
+}
+
+function flip() {
+  if (!currentCard) return;
+  const card = document.getElementById('flashcard');
+  isFlipped = !isFlipped;
+  if (isFlipped) {
+    card.classList.add('flipped');
+    speak(currentCard.text || currentCard.hanzi);
+  } else {
+    card.classList.remove('flipped');
+  }
+}
+
+function onSwipeLeft() {
+  if (!currentCard) return;
+  
+  if (currentCard.isPhrase) {
+    phraseStatus.delete(currentCard.id);
+  } else {
+    if (redCards.has(currentCard.id)) {
+      redCards.delete(currentCard.id);
+      yellowCards.set(currentCard.id, getNextDateForWord('yellow'));
+    } else if (yellowCards.has(currentCard.id)) {
+      yellowCards.delete(currentCard.id);
+    }
+  }
+  
+  saveAll();
+  initLevel(activeLevel);
+  animate('left');
+}
+
+function onSwipeRight() {
+  if (!currentCard) return;
+  
+  if (currentCard.isPhrase) {
+    const currentStatus = phraseStatus.get(currentCard.id);
+    const currentLevel = currentStatus ? currentStatus.level : 0;
+    
+    if (currentLevel === 0) {
+      phraseStatus.set(currentCard.id, { level: 1, returnDate: getNextDateForPhrase(0) });
+    } else if (currentLevel === 1) {
+      phraseStatus.set(currentCard.id, { level: 2, returnDate: getNextDateForPhrase(1) });
+    } else {
+      phraseStatus.set(currentCard.id, { level: 2, returnDate: getNextDateForPhrase(1) });
+    }
+  } else {
+    if (yellowCards.has(currentCard.id)) {
+      yellowCards.delete(currentCard.id);
+      redCards.set(currentCard.id, getNextDateForWord('red'));
+    } else if (redCards.has(currentCard.id)) {
+      learnedIds.add(currentCard.id);
+      redCards.delete(currentCard.id);
+    } else if (learnedIds.has(currentCard.id)) {
+      learnedIds.delete(currentCard.id);
+      redCards.set(currentCard.id, getNextDateForWord('red'));
+    } else {
+      yellowCards.set(currentCard.id, getNextDateForWord('yellow'));
+    }
+  }
+  
+  saveAll();
+  initLevel(activeLevel);
+  animate('right');
+}
+
+function animate(dir) {
+  const c = document.querySelector('.card-container');
+  if (!c) return;
+  c.classList.add(`swipe-${dir}`);
+  setTimeout(() => c.classList.remove(`swipe-${dir}`), 300);
+}
+
+function setupTouch() {
+  const c = document.querySelector('.card-container');
+  if (!c) return;
+  
+  c.addEventListener('touchstart', (e) => {
+    touchStartX = e.touches[0].clientX;
+    isSwiping = true;
+  }, { passive: false });
+  
+  c.addEventListener('touchmove', (e) => {
+    if (!isSwiping) return;
+    if (Math.abs(e.touches[0].clientX - touchStartX) > 10) e.preventDefault();
+  }, { passive: false });
+  
+  c.addEventListener('touchend', (e) => {
+    if (!isSwiping) return;
+    const delta = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(delta) > 50) {
+      if (delta > 0) onSwipeRight();
+      else onSwipeLeft();
+    }
+    isSwiping = false;
+  });
+  
+  let mx = 0;
+  c.addEventListener('mousedown', (e) => { mx = e.clientX; isSwiping = true; });
+  c.addEventListener('mouseup', (e) => {
+    if (!isSwiping) return;
+    const delta = e.clientX - mx;
+    if (Math.abs(delta) > 50) {
+      if (delta > 0) onSwipeRight();
+      else onSwipeLeft();
+    }
+    isSwiping = false;
+  });
+}
+
+function setupLevels() {
+  document.querySelectorAll('.level-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const value = btn.dataset.level;
+      
+      if (value === 'phrase') {
+        if (isPhraseOnlyMode) return;
+        isPhraseOnlyMode = true;
+        document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        initLevel('phrase');
+      } else {
+        if (!isPhraseOnlyMode && value === activeLevel) return;
+        isPhraseOnlyMode = false;
+        activeLevel = value;
+        document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        initLevel(activeLevel);
+      }
+    });
+  });
+}
+
+function setupLanguage() {
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const lang = btn.dataset.lang;
+      if (lang === currentLanguage) return;
+      currentLanguage = lang;
+      document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      
+      const leftLabel = document.getElementById('leftLabel');
+      const learnedLabel = document.getElementById('learnedLabel');
+      if (currentLanguage === 'ru') {
+        leftLabel.innerText = 'осталось';
+        learnedLabel.innerText = 'уже знаю';
+      } else {
+        leftLabel.innerText = 'left';
+        learnedLabel.innerText = 'known';
+      }
+      
+      updateDisplay();
+    });
+  });
+}
+
+function initSpeech() {
+  if (window.speechSynthesis) {
+    const dummy = new SpeechSynthesisUtterance('');
+    window.speechSynthesis.speak(dummy);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadDictionary();
+  setupLevels();
+  setupLanguage();
+  setupTouch();
+  initSpeech();
+  
+  const card = document.getElementById('flashcard');
+  if (card) card.addEventListener('click', (e) => { e.stopPropagation(); flip(); });
+});
