@@ -59,8 +59,24 @@ const phrasesList = [
 
 async function loadDictionary() {
   try {
+    console.log('1. Начинаю загрузку HSK14ruen.json...');
     const response = await fetch('HSK14ruen.json');
-    fullDictionary = await response.json();
+    console.log('2. Ответ получен, статус:', response.status);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    const text = await response.text();
+    console.log('3. Получено символов:', text.length);
+    console.log('4. Первые 100 символов:', text.substring(0, 100));
+    
+    fullDictionary = JSON.parse(text);
+    console.log('5. Успешно распарсено! Количество слов:', fullDictionary.length);
+    
+    if (fullDictionary.length === 0) {
+      throw new Error('Файл пуст');
+    }
     
     const saved = localStorage.getItem('chincards_learned');
     if (saved) learnedIds = new Set(JSON.parse(saved));
@@ -108,8 +124,12 @@ async function loadDictionary() {
     
     initLevel(activeLevel);
   } catch(e) {
-    console.error(e);
-    alert('Ошибка загрузки HSK14ruen.json! Проверьте, что файл есть в корне репозитория');
+    console.error('ОШИБКА:', e);
+    alert(`Ошибка загрузки HSK14ruen.json!\n\n${e.message}\n\nОткройте консоль (F12) для подробностей`);
+    fullDictionary = [
+      { hanzi: "测试", level: 1, pinyin: "cè shì", id: 1, translations: { rus: "тест", eng: "test" } }
+    ];
+    initLevel(1);
   }
 }
 
