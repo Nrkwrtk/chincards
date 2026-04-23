@@ -33,54 +33,50 @@ body {
   height: 100%;
 }
 
-/* Верхняя плашка */
 .header {
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(20px);
   border-radius: 28px;
-  padding: 8px 12px;
-  margin-bottom: 60px;
+  padding: 10px 16px;
+  margin-bottom: 20px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   width: 92%;
   max-width: 360px;
-  margin-left: auto;
-  margin-right: auto;
 }
 
 .level-row {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 8px;
-  gap: 6px;
+  margin-bottom: 12px;
+  gap: 10px;
 }
 
 .level-label {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 700;
   color: #ff9f4a;
 }
 
 .level-switch {
   display: flex;
-  gap: 5px;
-  flex-wrap: nowrap;
+  gap: 8px;
+  flex-wrap: wrap;
   justify-content: center;
 }
 
 .level-btn {
   background: rgba(255, 255, 255, 0.12);
   border: none;
-  width: 30px;
-  height: 30px;
-  border-radius: 30px;
-  font-size: 13px;
+  width: 34px;
+  height: 34px;
+  border-radius: 34px;
+  font-size: 15px;
   font-weight: 600;
   color: white;
   opacity: 0.8;
   transition: all 0.2s ease;
   cursor: pointer;
-  flex-shrink: 0;
 }
 
 .level-btn.active {
@@ -91,6 +87,35 @@ body {
 
 .level-btn.phrase-mode-btn.active {
   background: linear-gradient(135deg, #44aaff, #2288cc);
+  box-shadow: 0 2px 8px rgba(68, 170, 255, 0.25);
+}
+
+.lang-switch {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 40px;
+  padding: 4px;
+}
+
+.lang-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  padding: 5px 12px;
+  border-radius: 30px;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+  opacity: 0.7;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.lang-btn.active {
+  background: linear-gradient(135deg, #44aaff, #2288cc);
+  opacity: 1;
   box-shadow: 0 2px 8px rgba(68, 170, 255, 0.25);
 }
 
@@ -119,7 +144,6 @@ body {
   color: rgba(255, 255, 255, 0.6);
 }
 
-/* Контейнер карточки */
 .card-container {
   perspective: 1200px;
   width: 100%;
@@ -128,7 +152,6 @@ body {
   align-items: center;
 }
 
-/* Карточка */
 .card {
   width: 92%;
   max-width: 360px;
@@ -139,8 +162,6 @@ body {
   cursor: pointer;
   border-radius: 32px;
   box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.5);
-  margin-left: auto;
-  margin-right: auto;
 }
 
 .card.flipped {
@@ -161,7 +182,6 @@ body {
   padding: 20px;
 }
 
-/* ========== СЛОВА (HSK) ========== */
 .card-front {
   background: linear-gradient(145deg, #1a1a2a, #252540);
   transform: rotateY(0deg);
@@ -173,19 +193,16 @@ body {
   overflow-y: auto;
 }
 
-/* Жёлтые слова */
 .card-front.yellow, .card-back.yellow {
   background: linear-gradient(145deg, #3a2a1a, #4a3a1a);
   border: 2px solid #ffaa33;
 }
 
-/* Красные слова */
 .card-front.red, .card-back.red {
   background: linear-gradient(145deg, #3a1a1a, #4a2525);
   border: 2px solid #ff5555;
 }
 
-/* ========== ФРАЗЫ ========== */
 .card-front.phrase-blue, .card-back.phrase-blue {
   background: linear-gradient(145deg, #1a2a3a, #1a3a4a);
 }
