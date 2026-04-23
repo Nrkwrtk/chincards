@@ -21,6 +21,8 @@ let isFlipped = false;
 let touchStartX = 0;
 let isSwiping = false;
 
+const PHRASE_INTERVAL = 10; // Фраза каждые 10 слов
+
 const phrasesList = [
   { text: "你好", pinyin: "nǐ hǎo", translation_ru: "Здравствуйте", translation_en: "Hello", breakdown: "你 (ты) + 好 (хорошо)" },
   { text: "您好", pinyin: "nín hǎo", translation_ru: "Здравствуйте (уважительно)", translation_en: "Hello (respectful)", breakdown: "您 (Вы) + 好" },
@@ -59,7 +61,6 @@ const phrasesList = [
 
 async function loadDictionary() {
   try {
-    console.log('Загрузка HSK14ruen.json...');
     const response = await fetch('HSK14ruen.json');
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     fullDictionary = await response.json();
@@ -196,7 +197,8 @@ function loadNextCard() {
     currentDeckIndex = 0;
   }
   
-  const showPhrase = !isPhraseOnlyMode && availablePhrases.length > 0 && cardsSinceLastPhrase >= 5 && hasAvailableWords;
+  // Фраза каждые PHRASE_INTERVAL слов (10)
+  const showPhrase = !isPhraseOnlyMode && availablePhrases.length > 0 && cardsSinceLastPhrase >= PHRASE_INTERVAL && hasAvailableWords;
   
   if (isPhraseOnlyMode && availablePhrases.length > 0) {
     const randomIndex = Math.floor(Math.random() * availablePhrases.length);
