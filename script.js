@@ -1,5 +1,5 @@
 let fullDictionary = [];
-let activeLevel = 1;
+let activeLevel = '12';  // '12', '3', '4', 'phrase'
 let isPhraseOnlyMode = false;
 let currentLanguage = 'ru';
 
@@ -21,7 +21,7 @@ let isFlipped = false;
 let touchStartX = 0;
 let isSwiping = false;
 
-const PHRASE_INTERVAL = 10; // Фраза каждые 10 слов
+const PHRASE_INTERVAL = 10;
 
 const phrasesList = [
   { text: "你好", pinyin: "nǐ hǎo", translation_ru: "Здравствуйте", translation_en: "Hello", breakdown: "你 (ты) + 好 (хорошо)" },
@@ -115,7 +115,7 @@ async function loadDictionary() {
     fullDictionary = [
       { hanzi: "测试", level: 1, pinyin: "cè shì", id: 1, translations: { rus: "тест", eng: "test" } }
     ];
-    initLevel(1);
+    initLevel('12');
   }
 }
 
@@ -163,9 +163,22 @@ function getNextDateForWord(type) {
   return d;
 }
 
+// Получение слов для выбранного уровня (с объединением 1 и 2)
+function getWordsForLevel(level) {
+  if (level === '12') {
+    // Объединяем HSK 1 и 2
+    return fullDictionary.filter(w => w.level == 1 || w.level == 2);
+  } else if (level === '3') {
+    return fullDictionary.filter(w => w.level == 3);
+  } else if (level === '4') {
+    return fullDictionary.filter(w => w.level == 4);
+  }
+  return [];
+}
+
 function buildDeck() {
   if (isPhraseOnlyMode) return [];
-  const allLevelWords = fullDictionary.filter(w => w.level == activeLevel);
+  const allLevelWords = getWordsForLevel(activeLevel);
   const available = allLevelWords.filter(w => !learnedIds.has(w.id) && !yellowCards.has(w.id) && !redCards.has(w.id));
   return shuffleArray([...available]);
 }
@@ -179,7 +192,12 @@ function shuffleArray(arr) {
 }
 
 function initLevel(level) {
-  if (!isPhraseOnlyMode) activeLevel = level;
+  if (level !== 'phrase') {
+    isPhraseOnlyMode = false;
+    activeLevel = level;
+  } else {
+    isPhraseOnlyMode = true;
+  }
   checkReturns();
   currentDeck = buildDeck();
   currentDeckIndex = 0;
@@ -197,7 +215,6 @@ function loadNextCard() {
     currentDeckIndex = 0;
   }
   
-  // Фраза каждые PHRASE_INTERVAL слов (10)
   const showPhrase = !isPhraseOnlyMode && availablePhrases.length > 0 && cardsSinceLastPhrase >= PHRASE_INTERVAL && hasAvailableWords;
   
   if (isPhraseOnlyMode && availablePhrases.length > 0) {
@@ -288,8 +305,8 @@ function updateDisplay() {
 }
 
 function updateStats() {
-  const all = fullDictionary.filter(w => w.level == activeLevel);
-  const left = all.filter(w => !learnedIds.has(w.id) && !yellowCards.has(w.id) && !redCards.has(w.id)).length;
+  const allLevelWords = getWordsForLevel(activeLevel);
+  const left = allLevelWords.filter(w => !learnedIds.has(w.id) && !yellowCards.has(w.id) && !redCards.has(w.id)).length;
   document.getElementById('cardsLeft').innerText = left;
   document.getElementById('totalLearned').innerText = learnedIds.size;
 }
@@ -422,12 +439,11 @@ function setupLevels() {
         isPhraseOnlyMode = true;
         document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        initLevel(null);
+        initLevel('phrase');
       } else {
-        const lvl = parseInt(value);
-        if (!isPhraseOnlyMode && lvl === activeLevel) return;
+        if (!isPhraseOnlyMode && value === activeLevel) return;
         isPhraseOnlyMode = false;
-        activeLevel = lvl;
+        activeLevel = value;
         document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         initLevel(activeLevel);
