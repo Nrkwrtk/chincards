@@ -14,30 +14,30 @@ let phrasesDatabase = [];
 
 let currentDeck = [];
 let currentDeckIndex = 0;
-let cardsSinceLastPhrase = 0;
+let wordCounter = 0;          // Счётчик показанных слов (не фраз)
+let wordsSinceLastPhrase = 0; // Сколько слов показано после последней фразы
 
 let currentCard = null;
 let isFlipped = false;
 let touchStartX = 0;
 let isSwiping = false;
 
-const PHRASE_INTERVAL = 10;
+const PHRASE_INTERVAL = 10;   // Фраза каждые 10 слов
 
 async function loadDictionary() {
   try {
-    // Загружаем слова HSK
+    console.log('📁 Загрузка HSK14ruen.json...');
     const response = await fetch('HSK14ruen.json');
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     fullDictionary = await response.json();
-    console.log(`Загружено слов HSK: ${fullDictionary.length}`);
+    console.log(`✅ Загружено слов HSK: ${fullDictionary.length}`);
     
-    // Загружаем фразы из отдельного файла
+    console.log('💬 Загрузка phrases.json...');
     const phrasesResponse = await fetch('phrases.json');
     if (!phrasesResponse.ok) throw new Error(`HTTP ${phrasesResponse.status}`);
     const phrasesData = await phrasesResponse.json();
-    console.log(`Загружено фраз: ${phrasesData.length}`);
+    console.log(`✅ Загружено фраз: ${phrasesData.length}`);
     
-    // Добавляем ID и метку isPhrase
     for (let i = 0; i < phrasesData.length; i++) {
       phrasesDatabase.push({
         ...phrasesData[i],
@@ -79,11 +79,7 @@ async function loadDictionary() {
     initLevel(activeLevel);
   } catch(e) {
     console.error(e);
-    alert('Ошибка загрузки файлов! Проверьте:\n1. HSK14ruen.json\n2. phrases.json');
-    fullDictionary = [
-      { hanzi: "测试", level: 1, pinyin: "cè shì", id: 1, translations: { rus: "тест", eng: "test" } }
-    ];
-    initLevel('12');
+    alert('Ошибка загрузки файлов!');
   }
 }
 
@@ -167,40 +163,50 @@ function initLevel(level) {
   checkReturns();
   currentDeck = buildDeck();
   currentDeckIndex = 0;
-  cardsSinceLastPhrase = 0;
+  wordsSinceLastPhrase = 0;
   updateStats();
   loadNextCard();
 }
 
 function loadNextCard() {
   const availablePhrases = getAvailablePhrases();
-  const hasAvailableWords = !isPhraseOnlyMode && currentDeck.length > 0 && currentDeckIndex < currentDeck.length;
   
+  // Обновляем колоду если нужно
   if (!isPhraseOnlyMode && (currentDeckIndex >= currentDeck.length || currentDeck.length === 0)) {
     currentDeck = buildDeck();
     currentDeckIndex = 0;
   }
   
-  const showPhrase = !isPhraseOnlyMode && availablePhrases.length > 0 && cardsSinceLastPhrase >= PHRASE_INTERVAL && hasAvailableWords;
+  // Решаем, показывать фразу или слово
+  let showPhrase = false;
   
   if (isPhraseOnlyMode && availablePhrases.length > 0) {
+    showPhrase = true;
+  } else if (!isPhraseOnlyMode && availablePhrases.length > 0 && wordsSinceLastPhrase >= PHRASE_INTERVAL) {
+    showPhrase = true;
+  }
+  
+  if (showPhrase && availablePhrases.length > 0) {
+    // Показываем случайную фразу
     const randomIndex = Math.floor(Math.random() * availablePhrases.length);
     currentCard = availablePhrases[randomIndex];
-    cardsSinceLastPhrase = 0;
-  } else if (showPhrase) {
-    const randomIndex = Math.floor(Math.random() * availablePhrases.length);
-    currentCard = availablePhrases[randomIndex];
-    cardsSinceLastPhrase = 0;
+    wordsSinceLastPhrase = 0;
+    console.log('💬 ПОКАЗАНА ФРАЗА:', currentCard.text);
   } else if (!isPhraseOnlyMode && currentDeck.length > 0 && currentDeckIndex < currentDeck.length) {
+    // Показываем слово
     currentCard = currentDeck[currentDeckIndex];
     currentDeckIndex++;
-    cardsSinceLastPhrase++;
+    wordsSinceLastPhrase++;
+    console.log(`📖 СЛОВО: ${currentCard.hanzi} (${wordsSinceLastPhrase}/${PHRASE_INTERVAL})`);
   } else if (availablePhrases.length > 0) {
+    // Если слов нет, показываем фразу
     const randomIndex = Math.floor(Math.random() * availablePhrases.length);
     currentCard = availablePhrases[randomIndex];
-    cardsSinceLastPhrase = 0;
+    wordsSinceLastPhrase = 0;
+    console.log('💬 НЕТ СЛОВ, ПОКАЗАНА ФРАЗА:', currentCard.text);
   } else {
     currentCard = null;
+    console.log('❌ Нет ни слов, ни фраз');
   }
   
   isFlipped = false;
@@ -258,11 +264,9 @@ function updateDisplay() {
   document.getElementById('pinyin').innerHTML = currentCard.pinyin;
   
   if (currentCard.isPhrase) {
-    // Полный перевод фразы
     const fullTranslation = currentLanguage === 'ru' ? currentCard.translation_ru : currentCard.translation_en;
     document.getElementById('meaning').innerHTML = fullTranslation;
     
-    // Разбор по словам
     if (currentCard.breakdown && currentCard.breakdown.length > 0) {
       let breakdownHtml = '<div style="margin-top: 12px; width: 100%;">';
       for (let part of currentCard.breakdown) {
@@ -469,6 +473,7 @@ function initSpeech() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  console.log('🚀 Приложение запущено');
   loadDictionary();
   setupLevels();
   setupLanguage();
