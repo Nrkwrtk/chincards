@@ -14,14 +14,11 @@ let phrasesDatabase = [];
 
 let currentDeck = [];
 let currentDeckIndex = 0;
-let wordsSinceLastPhrase = 0;
 
 let currentCard = null;
 let isFlipped = false;
 let touchStartX = 0;
 let isSwiping = false;
-
-const PHRASE_INTERVAL = 2;  // ТЕСТ: фраза каждые 2 слова
 
 async function loadDictionary() {
   try {
@@ -139,7 +136,7 @@ function buildDeck() {
   if (isPhraseOnlyMode) return [];
   const allLevelWords = getWordsForLevel(activeLevel);
   const available = allLevelWords.filter(w => !learnedIds.has(w.id) && !yellowCards.has(w.id) && !redCards.has(w.id));
-  console.log(`🔨 Колода: ${available.length} слов`);
+  console.log(`🔨 Колода для уровня ${activeLevel}: ${available.length} слов`);
   return shuffleArray([...available]);
 }
 
@@ -153,20 +150,19 @@ function shuffleArray(arr) {
 
 function initLevel(level) {
   console.log('=== ИНИЦИАЛИЗАЦИЯ ===');
-  console.log('Режим:', level === 'phrase' ? 'ФРАЗЫ' : 'УРОВЕНЬ ' + level);
   
   if (level === 'phrase') {
     isPhraseOnlyMode = true;
+    console.log('Режим: ТОЛЬКО ФРАЗЫ');
   } else {
     isPhraseOnlyMode = false;
     activeLevel = level;
+    console.log('Режим: УРОВЕНЬ ' + level);
   }
   
   checkReturns();
   currentDeck = buildDeck();
   currentDeckIndex = 0;
-  
-  console.log('Слов показано после фразы:', wordsSinceLastPhrase);
   
   updateStats();
   loadNextCard();
@@ -180,9 +176,10 @@ function loadNextCard() {
     if (availablePhrases.length > 0) {
       const randomIndex = Math.floor(Math.random() * availablePhrases.length);
       currentCard = availablePhrases[randomIndex];
-      console.log('💬 [F] ФРАЗА:', currentCard.text);
+      console.log('💬 [ФРАЗЫ]', currentCard.text);
     } else {
       currentCard = null;
+      console.log('❌ Нет доступных фраз');
     }
     
     isFlipped = false;
@@ -194,37 +191,24 @@ function loadNextCard() {
     return;
   }
   
-  // ОБЫЧНЫЙ РЕЖИМ
+  // ОБЫЧНЫЙ РЕЖИМ (только слова)
   if (currentDeckIndex >= currentDeck.length || currentDeck.length === 0) {
     currentDeck = buildDeck();
     currentDeckIndex = 0;
   }
   
-  // ОТЛАДКА
-  const needPhrase = availablePhrases.length > 0 && wordsSinceLastPhrase >= PHRASE_INTERVAL && currentDeck.length > 0;
-  console.log(`🔍 wordsSinceLastPhrase=${wordsSinceLastPhrase}, needPhrase=${needPhrase}, availPhrases=${availablePhrases.length}, deckSize=${currentDeck.length}`);
-  
-  if (needPhrase) {
-    const randomIndex = Math.floor(Math.random() * availablePhrases.length);
-    currentCard = availablePhrases[randomIndex];
-    wordsSinceLastPhrase = 0;
-    console.log('💬 ФРАЗА!', currentCard.text);
-  } 
-  else if (currentDeck.length > 0 && currentDeckIndex < currentDeck.length) {
+  if (currentDeck.length > 0 && currentDeckIndex < currentDeck.length) {
     currentCard = currentDeck[currentDeckIndex];
     currentDeckIndex++;
-    wordsSinceLastPhrase++;
-    console.log(`📖 СЛОВО: ${currentCard.hanzi} | wordsSinceLastPhrase=${wordsSinceLastPhrase}/${PHRASE_INTERVAL}`);
-  } 
-  else if (availablePhrases.length > 0) {
+    console.log(`📖 СЛОВО ${currentDeckIndex}/${currentDeck.length}: ${currentCard.hanzi}`);
+  } else if (availablePhrases.length > 0) {
+    // Запасной вариант: если слов нет, показываем фразу
     const randomIndex = Math.floor(Math.random() * availablePhrases.length);
     currentCard = availablePhrases[randomIndex];
-    wordsSinceLastPhrase = 0;
     console.log('💬 НЕТ СЛОВ, ФРАЗА:', currentCard.text);
-  } 
-  else {
+  } else {
     currentCard = null;
-    console.log('❌ Нет ничего');
+    console.log('❌ Нет ни слов, ни фраз');
   }
   
   isFlipped = false;
@@ -273,7 +257,7 @@ function updateDisplay() {
   if (!currentCard) {
     document.getElementById('chineseChar').innerText = '🎉';
     document.getElementById('pinyin').innerHTML = '';
-    document.getElementById('meaning').innerHTML = 'Всё выучено!';
+    document.getElementById('meaning').innerHTML = 'Все слова и фразы выучены!';
     document.getElementById('breakdown').innerHTML = '';
     return;
   }
@@ -355,13 +339,11 @@ function onSwipeLeft() {
   }
   
   saveAll();
-  // Не сбрасываем счётчик!
+  // Перезапускаем текущий режим
   if (isPhraseOnlyMode) {
     initLevel('phrase');
   } else {
-    const saved = wordsSinceLastPhrase;
     initLevel(activeLevel);
-    wordsSinceLastPhrase = saved;
   }
   animate('left');
 }
@@ -376,30 +358,30 @@ function onSwipeRight() {
     
     if (currentLevel === 0) {
       phraseStatus.set(currentCard.id, { level: 1, returnDate: getNextDateForPhrase(0) });
-      console.log('  → СИНЯЯ');
+      console.log('  → Фраза стала СИНЕЙ (2 дня)');
     } else if (currentLevel === 1) {
       phraseStatus.set(currentCard.id, { level: 2, returnDate: getNextDateForPhrase(1) });
-      console.log('  → ТЁМНО-СИНЯЯ');
+      console.log('  → Фраза стала ТЁМНО-СИНЕЙ (месяц)');
     } else {
       phraseStatus.set(currentCard.id, { level: 2, returnDate: getNextDateForPhrase(1) });
-      console.log('  → ТЁМНО-СИНЯЯ (месяц)');
+      console.log('  → Фраза тёмно-синяя, скрыта ещё на месяц');
     }
   } else {
     if (yellowCards.has(currentCard.id)) {
       yellowCards.delete(currentCard.id);
       redCards.set(currentCard.id, getNextDateForWord('red'));
-      console.log('  → КРАСНОЕ');
+      console.log('  → Слово стало КРАСНЫМ (7 дней)');
     } else if (redCards.has(currentCard.id)) {
       learnedIds.add(currentCard.id);
       redCards.delete(currentCard.id);
-      console.log('  → ВЫУЧЕНО!');
+      console.log('  → Слово ВЫУЧЕНО! +1');
     } else if (learnedIds.has(currentCard.id)) {
       learnedIds.delete(currentCard.id);
       redCards.set(currentCard.id, getNextDateForWord('red'));
-      console.log('  → ПОВТОРЕНИЕ');
+      console.log('  → Слово на ПОВТОРЕНИЕ');
     } else {
       yellowCards.set(currentCard.id, getNextDateForWord('yellow'));
-      console.log('  → ЖЁЛТОЕ');
+      console.log('  → Слово стало ЖЁЛТЫМ (2 дня)');
     }
   }
   
@@ -407,9 +389,7 @@ function onSwipeRight() {
   if (isPhraseOnlyMode) {
     initLevel('phrase');
   } else {
-    const saved = wordsSinceLastPhrase;
     initLevel(activeLevel);
-    wordsSinceLastPhrase = saved;
   }
   animate('right');
 }
@@ -468,7 +448,6 @@ function setupLevels() {
         isPhraseOnlyMode = true;
         document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        wordsSinceLastPhrase = 0;
         initLevel('phrase');
       } else {
         if (!isPhraseOnlyMode && value === activeLevel) return;
@@ -476,7 +455,6 @@ function setupLevels() {
         activeLevel = value;
         document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        wordsSinceLastPhrase = 0;
         initLevel(activeLevel);
       }
     });
