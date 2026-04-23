@@ -1,0 +1,388 @@
+[
+    {
+        "id": "p_1",
+        "text": "你好",
+        "pinyin": "nǐ hǎo",
+        "translation_ru": "Здравствуйте",
+        "translation_en": "Hello",
+        "breakdown": [
+            { "char": "你", "pinyin": "nǐ", "translation_ru": "ты", "translation_en": "you" },
+            { "char": "好", "pinyin": "hǎo", "translation_ru": "хорошо", "translation_en": "good" }
+        ]
+    },
+    {
+        "id": "p_2",
+        "text": "您好",
+        "pinyin": "nín hǎo",
+        "translation_ru": "Здравствуйте (уважительно)",
+        "translation_en": "Hello (respectful)",
+        "breakdown": [
+            { "char": "您", "pinyin": "nín", "translation_ru": "Вы", "translation_en": "you (respectful)" },
+            { "char": "好", "pinyin": "hǎo", "translation_ru": "хорошо", "translation_en": "good" }
+        ]
+    },
+    {
+        "id": "p_3",
+        "text": "早上好",
+        "pinyin": "zǎo shang hǎo",
+        "translation_ru": "Доброе утро",
+        "translation_en": "Good morning",
+        "breakdown": [
+            { "char": "早", "pinyin": "zǎo", "translation_ru": "ранний", "translation_en": "early" },
+            { "char": "上", "pinyin": "shang", "translation_ru": "время", "translation_en": "time" },
+            { "char": "好", "pinyin": "hǎo", "translation_ru": "хорошо", "translation_en": "good" }
+        ]
+    },
+    {
+        "id": "p_4",
+        "text": "晚上好",
+        "pinyin": "wǎn shang hǎo",
+        "translation_ru": "Добрый вечер",
+        "translation_en": "Good evening",
+        "breakdown": [
+            { "char": "晚", "pinyin": "wǎn", "translation_ru": "поздний", "translation_en": "late" },
+            { "char": "上", "pinyin": "shang", "translation_ru": "время", "translation_en": "time" },
+            { "char": "好", "pinyin": "hǎo", "translation_ru": "хорошо", "translation_en": "good" }
+        ]
+    },
+    {
+        "id": "p_5",
+        "text": "晚安",
+        "pinyin": "wǎn ān",
+        "translation_ru": "Спокойной ночи",
+        "translation_en": "Good night",
+        "breakdown": [
+            { "char": "晚", "pinyin": "wǎn", "translation_ru": "поздний", "translation_en": "late" },
+            { "char": "安", "pinyin": "ān", "translation_ru": "спокойствие", "translation_en": "peace" }
+        ]
+    },
+    {
+        "id": "p_6",
+        "text": "再见",
+        "pinyin": "zài jiàn",
+        "translation_ru": "До свидания",
+        "translation_en": "Goodbye",
+        "breakdown": [
+            { "char": "再", "pinyin": "zài", "translation_ru": "снова", "translation_en": "again" },
+            { "char": "见", "pinyin": "jiàn", "translation_ru": "видеть", "translation_en": "to see" }
+        ]
+    },
+    {
+        "id": "p_7",
+        "text": "谢谢",
+        "pinyin": "xiè xie",
+        "translation_ru": "Спасибо",
+        "translation_en": "Thank you",
+        "breakdown": [
+            { "char": "谢", "pinyin": "xiè", "translation_ru": "благодарить", "translation_en": "to thank" }
+        ]
+    },
+    {
+        "id": "p_8",
+        "text": "不客气",
+        "pinyin": "bù kè qi",
+        "translation_ru": "Пожалуйста",
+        "translation_en": "You're welcome",
+        "breakdown": [
+            { "char": "不", "pinyin": "bù", "translation_ru": "не", "translation_en": "not" },
+            { "char": "客", "pinyin": "kè", "translation_ru": "гость", "translation_en": "guest" },
+            { "char": "气", "pinyin": "qì", "translation_ru": "энергия", "translation_en": "energy" }
+        ]
+    },
+    {
+        "id": "p_9",
+        "text": "对不起",
+        "pinyin": "duì bu qǐ",
+        "translation_ru": "Извините",
+        "translation_en": "Sorry",
+        "breakdown": [
+            { "char": "对", "pinyin": "duì", "translation_ru": "правильно", "translation_en": "correct" },
+            { "char": "不", "pinyin": "bu", "translation_ru": "не", "translation_en": "not" },
+            { "char": "起", "pinyin": "qǐ", "translation_ru": "подниматься", "translation_en": "to rise" }
+        ]
+    },
+    {
+        "id": "p_10",
+        "text": "没关系",
+        "pinyin": "méi guān xi",
+        "translation_ru": "Ничего страшного",
+        "translation_en": "No problem",
+        "breakdown": [
+            { "char": "没", "pinyin": "méi", "translation_ru": "нет", "translation_en": "no" },
+            { "char": "关", "pinyin": "guān", "translation_ru": "связь", "translation_en": "relation" },
+            { "char": "系", "pinyin": "xì", "translation_ru": "система", "translation_en": "system" }
+        ]
+    },
+    {
+        "id": "p_11",
+        "text": "你好吗",
+        "pinyin": "nǐ hǎo ma",
+        "translation_ru": "Как дела?",
+        "translation_en": "How are you?",
+        "breakdown": [
+            { "char": "你", "pinyin": "nǐ", "translation_ru": "ты", "translation_en": "you" },
+            { "char": "好", "pinyin": "hǎo", "translation_ru": "хорошо", "translation_en": "good" },
+            { "char": "吗", "pinyin": "ma", "translation_ru": "вопрос", "translation_en": "question particle" }
+        ]
+    },
+    {
+        "id": "p_12",
+        "text": "我很好",
+        "pinyin": "wǒ hěn hǎo",
+        "translation_ru": "У меня всё хорошо",
+        "translation_en": "I'm fine",
+        "breakdown": [
+            { "char": "我", "pinyin": "wǒ", "translation_ru": "я", "translation_en": "I" },
+            { "char": "很", "pinyin": "hěn", "translation_ru": "очень", "translation_en": "very" },
+            { "char": "好", "pinyin": "hǎo", "translation_ru": "хорошо", "translation_en": "good" }
+        ]
+    },
+    {
+        "id": "p_13",
+        "text": "你叫什么名字",
+        "pinyin": "nǐ jiào shén me míng zi",
+        "translation_ru": "Как тебя зовут?",
+        "translation_en": "What's your name?",
+        "breakdown": [
+            { "char": "你", "pinyin": "nǐ", "translation_ru": "ты", "translation_en": "you" },
+            { "char": "叫", "pinyin": "jiào", "translation_ru": "звать", "translation_en": "to call" },
+            { "char": "什么", "pinyin": "shén me", "translation_ru": "что", "translation_en": "what" },
+            { "char": "名字", "pinyin": "míng zi", "translation_ru": "имя", "translation_en": "name" }
+        ]
+    },
+    {
+        "id": "p_14",
+        "text": "我不知道",
+        "pinyin": "wǒ bù zhī dào",
+        "translation_ru": "Я не знаю",
+        "translation_en": "I don't know",
+        "breakdown": [
+            { "char": "我", "pinyin": "wǒ", "translation_ru": "я", "translation_en": "I" },
+            { "char": "不", "pinyin": "bù", "translation_ru": "не", "translation_en": "not" },
+            { "char": "知道", "pinyin": "zhī dào", "translation_ru": "знать", "translation_en": "to know" }
+        ]
+    },
+    {
+        "id": "p_15",
+        "text": "我明白了",
+        "pinyin": "wǒ míng bai le",
+        "translation_ru": "Я понял",
+        "translation_en": "I understand",
+        "breakdown": [
+            { "char": "我", "pinyin": "wǒ", "translation_ru": "я", "translation_en": "I" },
+            { "char": "明白", "pinyin": "míng bai", "translation_ru": "понимать", "translation_en": "to understand" },
+            { "char": "了", "pinyin": "le", "translation_ru": "частица", "translation_en": "completion particle" }
+        ]
+    },
+    {
+        "id": "p_16",
+        "text": "在左边",
+        "pinyin": "zài zuǒ biān",
+        "translation_ru": "Слева",
+        "translation_en": "On the left",
+        "breakdown": [
+            { "char": "在", "pinyin": "zài", "translation_ru": "находиться", "translation_en": "to be at" },
+            { "char": "左", "pinyin": "zuǒ", "translation_ru": "левый", "translation_en": "left" },
+            { "char": "边", "pinyin": "biān", "translation_ru": "сторона", "translation_en": "side" }
+        ]
+    },
+    {
+        "id": "p_17",
+        "text": "在右边",
+        "pinyin": "zài yòu biān",
+        "translation_ru": "Справа",
+        "translation_en": "On the right",
+        "breakdown": [
+            { "char": "在", "pinyin": "zài", "translation_ru": "находиться", "translation_en": "to be at" },
+            { "char": "右", "pinyin": "yòu", "translation_ru": "правый", "translation_en": "right" },
+            { "char": "边", "pinyin": "biān", "translation_ru": "сторона", "translation_en": "side" }
+        ]
+    },
+    {
+        "id": "p_18",
+        "text": "一直走",
+        "pinyin": "yī zhí zǒu",
+        "translation_ru": "Идите прямо",
+        "translation_en": "Go straight",
+        "breakdown": [
+            { "char": "一", "pinyin": "yī", "translation_ru": "один", "translation_en": "one" },
+            { "char": "直", "pinyin": "zhí", "translation_ru": "прямой", "translation_en": "straight" },
+            { "char": "走", "pinyin": "zǒu", "translation_ru": "идти", "translation_en": "to go" }
+        ]
+    },
+    {
+        "id": "p_19",
+        "text": "向左转",
+        "pinyin": "xiàng zuǒ zhuǎn",
+        "translation_ru": "Поверните налево",
+        "translation_en": "Turn left",
+        "breakdown": [
+            { "char": "向", "pinyin": "xiàng", "translation_ru": "в направлении", "translation_en": "towards" },
+            { "char": "左", "pinyin": "zuǒ", "translation_ru": "левый", "translation_en": "left" },
+            { "char": "转", "pinyin": "zhuǎn", "translation_ru": "поворачивать", "translation_en": "to turn" }
+        ]
+    },
+    {
+        "id": "p_20",
+        "text": "向右转",
+        "pinyin": "xiàng yòu zhuǎn",
+        "translation_ru": "Поверните направо",
+        "translation_en": "Turn right",
+        "breakdown": [
+            { "char": "向", "pinyin": "xiàng", "translation_ru": "в направлении", "translation_en": "towards" },
+            { "char": "右", "pinyin": "yòu", "translation_ru": "правый", "translation_en": "right" },
+            { "char": "转", "pinyin": "zhuǎn", "translation_ru": "поворачивать", "translation_en": "to turn" }
+        ]
+    },
+    {
+        "id": "p_21",
+        "text": "多少钱",
+        "pinyin": "duō shao qián",
+        "translation_ru": "Сколько стоит?",
+        "translation_en": "How much is it?",
+        "breakdown": [
+            { "char": "多", "pinyin": "duō", "translation_ru": "много", "translation_en": "many" },
+            { "char": "少", "pinyin": "shǎo", "translation_ru": "мало", "translation_en": "few" },
+            { "char": "钱", "pinyin": "qián", "translation_ru": "деньги", "translation_en": "money" }
+        ]
+    },
+    {
+        "id": "p_22",
+        "text": "太贵了",
+        "pinyin": "tài guì le",
+        "translation_ru": "Слишком дорого",
+        "translation_en": "Too expensive",
+        "breakdown": [
+            { "char": "太", "pinyin": "tài", "translation_ru": "слишком", "translation_en": "too" },
+            { "char": "贵", "pinyin": "guì", "translation_ru": "дорогой", "translation_en": "expensive" },
+            { "char": "了", "pinyin": "le", "translation_ru": "частица", "translation_en": "completion particle" }
+        ]
+    },
+    {
+        "id": "p_23",
+        "text": "我要这个",
+        "pinyin": "wǒ yào zhè ge",
+        "translation_ru": "Я хочу это",
+        "translation_en": "I want this",
+        "breakdown": [
+            { "char": "我", "pinyin": "wǒ", "translation_ru": "я", "translation_en": "I" },
+            { "char": "要", "pinyin": "yào", "translation_ru": "хотеть", "translation_en": "to want" },
+            { "char": "这个", "pinyin": "zhè ge", "translation_ru": "это", "translation_en": "this" }
+        ]
+    },
+    {
+        "id": "p_24",
+        "text": "加油",
+        "pinyin": "jiā yóu",
+        "translation_ru": "Держись!/Давай!",
+        "translation_en": "Come on!/Keep it up!",
+        "breakdown": [
+            { "char": "加", "pinyin": "jiā", "translation_ru": "добавлять", "translation_en": "to add" },
+            { "char": "油", "pinyin": "yóu", "translation_ru": "масло", "translation_en": "oil" }
+        ]
+    },
+    {
+        "id": "p_25",
+        "text": "慢慢来",
+        "pinyin": "màn man lái",
+        "translation_ru": "Не торопись",
+        "translation_en": "Take it slow",
+        "breakdown": [
+            { "char": "慢", "pinyin": "màn", "translation_ru": "медленный", "translation_en": "slow" },
+            { "char": "慢", "pinyin": "man", "translation_ru": "медленно", "translation_en": "slowly" },
+            { "char": "来", "pinyin": "lái", "translation_ru": "делать", "translation_en": "to do" }
+        ]
+    },
+    {
+        "id": "p_26",
+        "text": "真的吗",
+        "pinyin": "zhēn de ma",
+        "translation_ru": "Правда?",
+        "translation_en": "Really?",
+        "breakdown": [
+            { "char": "真", "pinyin": "zhēn", "translation_ru": "правда", "translation_en": "really" },
+            { "char": "的", "pinyin": "de", "translation_ru": "частица", "translation_en": "particle" },
+            { "char": "吗", "pinyin": "ma", "translation_ru": "вопрос", "translation_en": "question particle" }
+        ]
+    },
+    {
+        "id": "p_27",
+        "text": "太好了",
+        "pinyin": "tài hǎo le",
+        "translation_ru": "Отлично!",
+        "translation_en": "Great!",
+        "breakdown": [
+            { "char": "太", "pinyin": "tài", "translation_ru": "слишком", "translation_en": "too" },
+            { "char": "好", "pinyin": "hǎo", "translation_ru": "хорошо", "translation_en": "good" },
+            { "char": "了", "pinyin": "le", "translation_ru": "частица", "translation_en": "completion particle" }
+        ]
+    },
+    {
+        "id": "p_28",
+        "text": "小心",
+        "pinyin": "xiǎo xīn",
+        "translation_ru": "Осторожно!",
+        "translation_en": "Be careful",
+        "breakdown": [
+            { "char": "小", "pinyin": "xiǎo", "translation_ru": "маленький", "translation_en": "small" },
+            { "char": "心", "pinyin": "xīn", "translation_ru": "сердце", "translation_en": "heart" }
+        ]
+    },
+    {
+        "id": "p_29",
+        "text": "等一下",
+        "pinyin": "děng yī xià",
+        "translation_ru": "Подожди",
+        "translation_en": "Wait a moment",
+        "breakdown": [
+            { "char": "等", "pinyin": "děng", "translation_ru": "ждать", "translation_en": "to wait" },
+            { "char": "一", "pinyin": "yī", "translation_ru": "один", "translation_en": "one" },
+            { "char": "下", "pinyin": "xià", "translation_ru": "немного", "translation_en": "a little" }
+        ]
+    },
+    {
+        "id": "p_30",
+        "text": "现在几点",
+        "pinyin": "xiàn zài jǐ diǎn",
+        "translation_ru": "Который час?",
+        "translation_en": "What time is it?",
+        "breakdown": [
+            { "char": "现在", "pinyin": "xiàn zài", "translation_ru": "сейчас", "translation_en": "now" },
+            { "char": "几", "pinyin": "jǐ", "translation_ru": "сколько", "translation_en": "how many" },
+            { "char": "点", "pinyin": "diǎn", "translation_ru": "час", "translation_en": "o'clock" }
+        ]
+    },
+    {
+        "id": "p_31",
+        "text": "今天",
+        "pinyin": "jīn tiān",
+        "translation_ru": "Сегодня",
+        "translation_en": "Today",
+        "breakdown": [
+            { "char": "今", "pinyin": "jīn", "translation_ru": "сейчас", "translation_en": "present" },
+            { "char": "天", "pinyin": "tiān", "translation_ru": "день", "translation_en": "day" }
+        ]
+    },
+    {
+        "id": "p_32",
+        "text": "明天",
+        "pinyin": "míng tiān",
+        "translation_ru": "Завтра",
+        "translation_en": "Tomorrow",
+        "breakdown": [
+            { "char": "明", "pinyin": "míng", "translation_ru": "следующий", "translation_en": "next" },
+            { "char": "天", "pinyin": "tiān", "translation_ru": "день", "translation_en": "day" }
+        ]
+    },
+    {
+        "id": "p_33",
+        "text": "昨天",
+        "pinyin": "zuó tiān",
+        "translation_ru": "Вчера",
+        "translation_en": "Yesterday",
+        "breakdown": [
+            { "char": "昨", "pinyin": "zuó", "translation_ru": "предыдущий", "translation_en": "previous" },
+            { "char": "天", "pinyin": "tiān", "translation_ru": "день", "translation_en": "day" }
+        ]
+    }
+]
