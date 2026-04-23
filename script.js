@@ -14,15 +14,14 @@ let phrasesDatabase = [];
 
 let currentDeck = [];
 let currentDeckIndex = 0;
-let wordCounter = 0;          // Счётчик показанных слов (не фраз)
-let wordsSinceLastPhrase = 0; // Сколько слов показано после последней фразы
+let wordsSinceLastPhrase = 0;
 
 let currentCard = null;
 let isFlipped = false;
 let touchStartX = 0;
 let isSwiping = false;
 
-const PHRASE_INTERVAL = 10;   // Фраза каждые 10 слов
+const PHRASE_INTERVAL = 10;
 
 async function loadDictionary() {
   try {
@@ -142,6 +141,7 @@ function buildDeck() {
   if (isPhraseOnlyMode) return [];
   const allLevelWords = getWordsForLevel(activeLevel);
   const available = allLevelWords.filter(w => !learnedIds.has(w.id) && !yellowCards.has(w.id) && !redCards.has(w.id));
+  console.log(`🔨 Построена колода: ${available.length} элементов`);
   return shuffleArray([...available]);
 }
 
@@ -154,12 +154,15 @@ function shuffleArray(arr) {
 }
 
 function initLevel(level) {
-  if (level !== 'phrase') {
+  console.log(`🎮 Инициализация: ${level === 'phrase' ? 'ТОЛЬКО ФРАЗЫ' : 'УРОВЕНЬ ' + level}`);
+  
+  if (level === 'phrase') {
+    isPhraseOnlyMode = true;
+  } else {
     isPhraseOnlyMode = false;
     activeLevel = level;
-  } else {
-    isPhraseOnlyMode = true;
   }
+  
   checkReturns();
   currentDeck = buildDeck();
   currentDeckIndex = 0;
@@ -171,39 +174,53 @@ function initLevel(level) {
 function loadNextCard() {
   const availablePhrases = getAvailablePhrases();
   
-  // Обновляем колоду если нужно
-  if (!isPhraseOnlyMode && (currentDeckIndex >= currentDeck.length || currentDeck.length === 0)) {
+  // РЕЖИМ ТОЛЬКО ФРАЗЫ
+  if (isPhraseOnlyMode) {
+    if (availablePhrases.length > 0) {
+      const randomIndex = Math.floor(Math.random() * availablePhrases.length);
+      currentCard = availablePhrases[randomIndex];
+      wordsSinceLastPhrase = 0;
+      console.log('💬 [ФРАЗЫ]', currentCard.text);
+    } else {
+      currentCard = null;
+      console.log('❌ Нет доступных фраз');
+    }
+    
+    isFlipped = false;
+    const cardEl = document.getElementById('flashcard');
+    if (cardEl) cardEl.classList.remove('flipped');
+    
+    updateDisplay();
+    updateCardStyle();
+    return;
+  }
+  
+  // ОБЫЧНЫЙ РЕЖИМ (с фразами каждые 10 слов)
+  if (currentDeckIndex >= currentDeck.length || currentDeck.length === 0) {
     currentDeck = buildDeck();
     currentDeckIndex = 0;
   }
   
-  // Решаем, показывать фразу или слово
   let showPhrase = false;
-  
-  if (isPhraseOnlyMode && availablePhrases.length > 0) {
-    showPhrase = true;
-  } else if (!isPhraseOnlyMode && availablePhrases.length > 0 && wordsSinceLastPhrase >= PHRASE_INTERVAL) {
+  if (availablePhrases.length > 0 && wordsSinceLastPhrase >= PHRASE_INTERVAL && currentDeck.length > 0) {
     showPhrase = true;
   }
   
   if (showPhrase && availablePhrases.length > 0) {
-    // Показываем случайную фразу
     const randomIndex = Math.floor(Math.random() * availablePhrases.length);
     currentCard = availablePhrases[randomIndex];
     wordsSinceLastPhrase = 0;
-    console.log('💬 ПОКАЗАНА ФРАЗА:', currentCard.text);
-  } else if (!isPhraseOnlyMode && currentDeck.length > 0 && currentDeckIndex < currentDeck.length) {
-    // Показываем слово
+    console.log('💬 ФРАЗА:', currentCard.text);
+  } else if (currentDeck.length > 0 && currentDeckIndex < currentDeck.length) {
     currentCard = currentDeck[currentDeckIndex];
     currentDeckIndex++;
     wordsSinceLastPhrase++;
     console.log(`📖 СЛОВО: ${currentCard.hanzi} (${wordsSinceLastPhrase}/${PHRASE_INTERVAL})`);
   } else if (availablePhrases.length > 0) {
-    // Если слов нет, показываем фразу
     const randomIndex = Math.floor(Math.random() * availablePhrases.length);
     currentCard = availablePhrases[randomIndex];
     wordsSinceLastPhrase = 0;
-    console.log('💬 НЕТ СЛОВ, ПОКАЗАНА ФРАЗА:', currentCard.text);
+    console.log('💬 НЕТ СЛОВ, ФРАЗА:', currentCard.text);
   } else {
     currentCard = null;
     console.log('❌ Нет ни слов, ни фраз');
@@ -336,7 +353,7 @@ function onSwipeLeft() {
   }
   
   saveAll();
-  initLevel(activeLevel);
+  initLevel(isPhraseOnlyMode ? 'phrase' : activeLevel);
   animate('left');
 }
 
@@ -370,7 +387,7 @@ function onSwipeRight() {
   }
   
   saveAll();
-  initLevel(activeLevel);
+  initLevel(isPhraseOnlyMode ? 'phrase' : activeLevel);
   animate('right');
 }
 
