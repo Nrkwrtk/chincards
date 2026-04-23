@@ -14,14 +14,14 @@ let phrasesDatabase = [];
 
 let currentDeck = [];
 let currentDeckIndex = 0;
-let wordsSinceLastPhrase = 0;  // Глобальный счётчик, не сбрасывается при инициализации
+let wordsSinceLastPhrase = 0;
 
 let currentCard = null;
 let isFlipped = false;
 let touchStartX = 0;
 let isSwiping = false;
 
-const PHRASE_INTERVAL = 10;
+const PHRASE_INTERVAL = 2;  // ТЕСТ: фраза каждые 2 слова
 
 async function loadDictionary() {
   try {
@@ -139,6 +139,7 @@ function buildDeck() {
   if (isPhraseOnlyMode) return [];
   const allLevelWords = getWordsForLevel(activeLevel);
   const available = allLevelWords.filter(w => !learnedIds.has(w.id) && !yellowCards.has(w.id) && !redCards.has(w.id));
+  console.log(`🔨 Колода: ${available.length} слов`);
   return shuffleArray([...available]);
 }
 
@@ -152,7 +153,7 @@ function shuffleArray(arr) {
 
 function initLevel(level) {
   console.log('=== ИНИЦИАЛИЗАЦИЯ ===');
-  console.log('Режим:', level === 'phrase' ? 'ТОЛЬКО ФРАЗЫ' : 'УРОВЕНЬ ' + level);
+  console.log('Режим:', level === 'phrase' ? 'ФРАЗЫ' : 'УРОВЕНЬ ' + level);
   
   if (level === 'phrase') {
     isPhraseOnlyMode = true;
@@ -164,11 +165,8 @@ function initLevel(level) {
   checkReturns();
   currentDeck = buildDeck();
   currentDeckIndex = 0;
-  // НЕ СБРАСЫВАЕМ wordsSinceLastPhrase !!!
   
-  console.log('Колода слов:', currentDeck.length);
-  console.log('Доступно фраз:', getAvailablePhrases().length);
-  console.log('Слов показано после последней фразы:', wordsSinceLastPhrase);
+  console.log('Слов показано после фразы:', wordsSinceLastPhrase);
   
   updateStats();
   loadNextCard();
@@ -182,7 +180,7 @@ function loadNextCard() {
     if (availablePhrases.length > 0) {
       const randomIndex = Math.floor(Math.random() * availablePhrases.length);
       currentCard = availablePhrases[randomIndex];
-      console.log('💬 [ФРАЗЫ]', currentCard.text);
+      console.log('💬 [F] ФРАЗА:', currentCard.text);
     } else {
       currentCard = null;
     }
@@ -197,41 +195,26 @@ function loadNextCard() {
   }
   
   // ОБЫЧНЫЙ РЕЖИМ
-  // Если колода пустая или закончилась, пересоздаём
   if (currentDeckIndex >= currentDeck.length || currentDeck.length === 0) {
     currentDeck = buildDeck();
     currentDeckIndex = 0;
-    console.log('🔄 Колода пересоздана, слов:', currentDeck.length);
-    // Если слов нет, показываем фразу
-    if (currentDeck.length === 0 && availablePhrases.length > 0) {
-      const randomIndex = Math.floor(Math.random() * availablePhrases.length);
-      currentCard = availablePhrases[randomIndex];
-      wordsSinceLastPhrase = 0;
-      console.log('💬 НЕТ СЛОВ, ФРАЗА:', currentCard.text);
-      
-      isFlipped = false;
-      const cardEl = document.getElementById('flashcard');
-      if (cardEl) cardEl.classList.remove('flipped');
-      
-      updateDisplay();
-      updateCardStyle();
-      return;
-    }
   }
   
-  // Проверяем, пора ли показать фразу
-  if (availablePhrases.length > 0 && wordsSinceLastPhrase >= PHRASE_INTERVAL && currentDeck.length > 0) {
+  // ОТЛАДКА
+  const needPhrase = availablePhrases.length > 0 && wordsSinceLastPhrase >= PHRASE_INTERVAL && currentDeck.length > 0;
+  console.log(`🔍 wordsSinceLastPhrase=${wordsSinceLastPhrase}, needPhrase=${needPhrase}, availPhrases=${availablePhrases.length}, deckSize=${currentDeck.length}`);
+  
+  if (needPhrase) {
     const randomIndex = Math.floor(Math.random() * availablePhrases.length);
     currentCard = availablePhrases[randomIndex];
     wordsSinceLastPhrase = 0;
     console.log('💬 ФРАЗА!', currentCard.text);
   } 
   else if (currentDeck.length > 0 && currentDeckIndex < currentDeck.length) {
-    // Показываем слово
     currentCard = currentDeck[currentDeckIndex];
     currentDeckIndex++;
     wordsSinceLastPhrase++;
-    console.log(`📖 СЛОВО ${currentDeckIndex}/${currentDeck.length}: ${currentCard.hanzi} | До фразы: ${PHRASE_INTERVAL - wordsSinceLastPhrase}`);
+    console.log(`📖 СЛОВО: ${currentCard.hanzi} | wordsSinceLastPhrase=${wordsSinceLastPhrase}/${PHRASE_INTERVAL}`);
   } 
   else if (availablePhrases.length > 0) {
     const randomIndex = Math.floor(Math.random() * availablePhrases.length);
@@ -241,7 +224,7 @@ function loadNextCard() {
   } 
   else {
     currentCard = null;
-    console.log('❌ Нет ни слов, ни фраз');
+    console.log('❌ Нет ничего');
   }
   
   isFlipped = false;
@@ -290,7 +273,7 @@ function updateDisplay() {
   if (!currentCard) {
     document.getElementById('chineseChar').innerText = '🎉';
     document.getElementById('pinyin').innerHTML = '';
-    document.getElementById('meaning').innerHTML = 'Все слова и фразы выучены!';
+    document.getElementById('meaning').innerHTML = 'Всё выучено!';
     document.getElementById('breakdown').innerHTML = '';
     return;
   }
@@ -358,7 +341,7 @@ function flip() {
 
 function onSwipeLeft() {
   if (!currentCard) return;
-  console.log('👈 СВАЙП ВЛЕВО (не знаю):', currentCard.text || currentCard.hanzi);
+  console.log('👈 НЕ ЗНАЮ:', currentCard.text || currentCard.hanzi);
   
   if (currentCard.isPhrase) {
     phraseStatus.delete(currentCard.id);
@@ -372,21 +355,20 @@ function onSwipeLeft() {
   }
   
   saveAll();
-  // Перезапускаем текущий режим, НО НЕ СБРАСЫВАЕМ счётчик
+  // Не сбрасываем счётчик!
   if (isPhraseOnlyMode) {
     initLevel('phrase');
   } else {
-    // Сохраняем счётчик перед перезапуском
-    const savedCounter = wordsSinceLastPhrase;
+    const saved = wordsSinceLastPhrase;
     initLevel(activeLevel);
-    wordsSinceLastPhrase = savedCounter;
+    wordsSinceLastPhrase = saved;
   }
   animate('left');
 }
 
 function onSwipeRight() {
   if (!currentCard) return;
-  console.log('👉 СВАЙП ВПРАВО (знаю):', currentCard.text || currentCard.hanzi);
+  console.log('👉 ЗНАЮ:', currentCard.text || currentCard.hanzi);
   
   if (currentCard.isPhrase) {
     const currentStatus = phraseStatus.get(currentCard.id);
@@ -394,41 +376,40 @@ function onSwipeRight() {
     
     if (currentLevel === 0) {
       phraseStatus.set(currentCard.id, { level: 1, returnDate: getNextDateForPhrase(0) });
-      console.log('  → Фраза стала СИНЕЙ');
+      console.log('  → СИНЯЯ');
     } else if (currentLevel === 1) {
       phraseStatus.set(currentCard.id, { level: 2, returnDate: getNextDateForPhrase(1) });
-      console.log('  → Фраза стала ТЁМНО-СИНЕЙ');
+      console.log('  → ТЁМНО-СИНЯЯ');
     } else {
       phraseStatus.set(currentCard.id, { level: 2, returnDate: getNextDateForPhrase(1) });
-      console.log('  → Фраза тёмно-синяя, скрыта ещё на месяц');
+      console.log('  → ТЁМНО-СИНЯЯ (месяц)');
     }
   } else {
     if (yellowCards.has(currentCard.id)) {
       yellowCards.delete(currentCard.id);
       redCards.set(currentCard.id, getNextDateForWord('red'));
-      console.log('  → Слово стало КРАСНЫМ');
+      console.log('  → КРАСНОЕ');
     } else if (redCards.has(currentCard.id)) {
       learnedIds.add(currentCard.id);
       redCards.delete(currentCard.id);
-      console.log('  → Слово ВЫУЧЕНО!');
+      console.log('  → ВЫУЧЕНО!');
     } else if (learnedIds.has(currentCard.id)) {
       learnedIds.delete(currentCard.id);
       redCards.set(currentCard.id, getNextDateForWord('red'));
-      console.log('  → Слово на ПОВТОРЕНИЕ');
+      console.log('  → ПОВТОРЕНИЕ');
     } else {
       yellowCards.set(currentCard.id, getNextDateForWord('yellow'));
-      console.log('  → Слово стало ЖЁЛТЫМ');
+      console.log('  → ЖЁЛТОЕ');
     }
   }
   
   saveAll();
-  // Перезапускаем текущий режим, НО НЕ СБРАСЫВАЕМ счётчик
   if (isPhraseOnlyMode) {
     initLevel('phrase');
   } else {
-    const savedCounter = wordsSinceLastPhrase;
+    const saved = wordsSinceLastPhrase;
     initLevel(activeLevel);
-    wordsSinceLastPhrase = savedCounter;
+    wordsSinceLastPhrase = saved;
   }
   animate('right');
 }
@@ -484,7 +465,6 @@ function setupLevels() {
       
       if (value === 'phrase') {
         if (isPhraseOnlyMode) return;
-        console.log('🔘 Переключение на РЕЖИМ ТОЛЬКО ФРАЗЫ');
         isPhraseOnlyMode = true;
         document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
@@ -492,7 +472,6 @@ function setupLevels() {
         initLevel('phrase');
       } else {
         if (!isPhraseOnlyMode && value === activeLevel) return;
-        console.log(`🔘 Переключение на УРОВЕНЬ ${value}`);
         isPhraseOnlyMode = false;
         activeLevel = value;
         document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('active'));
@@ -536,7 +515,7 @@ function initSpeech() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('🚀 Приложение запущено');
+  console.log('🚀 ПРИЛОЖЕНИЕ ЗАПУЩЕНО');
   loadDictionary();
   setupLevels();
   setupLanguage();
