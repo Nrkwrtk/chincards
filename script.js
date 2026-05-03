@@ -279,19 +279,25 @@ function getCurrentCard() {
 }
 
 function updateProgressBar() {
-  const barFill = document.getElementById('progressBarFill');
-  if (!barFill) return;
+  const container = document.getElementById('progressBarContainer');
+  if (!container) return;
   
   const card = getCurrentCard();
+  
   if (!card || card.isPhrase) {
-    barFill.style.width = '0%';
+    container.innerHTML = '';
     return;
   }
   
   const progress = wordProgress.get(card.id);
   const successCount = progress ? progress.successCount : 0;
-  const percent = (successCount / 10) * 100;
-  barFill.style.width = `${percent}%`;
+  
+  let html = '';
+  for (let i = 0; i < 10; i++) {
+    const filled = i < successCount;
+    html += `<div class="progress-segment ${filled ? 'filled' : ''}"></div>`;
+  }
+  container.innerHTML = html;
 }
 
 function updateDisplay() {
