@@ -191,9 +191,11 @@ body {
   overflow-y: auto;
   justify-content: center;
   position: relative;
-  padding-bottom: 24px;
+  padding: 20px;
+  padding-bottom: 0;
 }
 
+/* Прогресс-бар — 10 секций, приклеен к низу */
 .progress-bar-container {
   position: absolute;
   bottom: 0;
@@ -201,7 +203,7 @@ body {
   right: 0;
   display: flex;
   gap: 4px;
-  padding: 8px 12px 12px 12px;
+  padding: 0 12px 12px 12px;
   background: transparent;
   border-radius: 0 0 32px 32px;
   overflow: hidden;
@@ -217,6 +219,13 @@ body {
 
 .progress-segment.filled {
   background: linear-gradient(90deg, #44aaff, #ff9f4a);
+}
+
+/* Добавляем отступ снизу для контента, чтобы он не наезжал на прогресс-бар */
+.card-back > .pinyin,
+.card-back > .meaning,
+.card-back > .breakdown {
+  margin-bottom: 20px;
 }
 
 .card-front.yellow, .card-back.yellow {
