@@ -172,14 +172,12 @@ body {
   height: 100%;
   backface-visibility: hidden;
   border-radius: 32px;
-  display: flex;
-  flex-direction: column;
-  padding: 24px 20px;
 }
 
 .card-front {
   background: linear-gradient(145deg, #1a1a2a, #252540);
   transform: rotateY(0deg);
+  display: flex;
   justify-content: center;
   align-items: center;
 }
@@ -187,26 +185,60 @@ body {
 .card-back {
   background: linear-gradient(145deg, #1e1e30, #282844);
   transform: rotateY(180deg);
-  justify-content: space-between;
-  align-items: center;
-}
-
-/* Контент на обратной стороне - занимает всё пространство, центрируется */
-.card-back-content {
-  flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  position: relative;
+}
+
+/* Контент центрирован */
+.card-back-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
   width: 100%;
+  padding: 20px;
+}
+
+/* Точки прогресса — строго внизу */
+.progress-dots {
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.progress-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  transition: background 0.2s ease;
+}
+
+.progress-dot.filled {
+  background: #ff6b2c;
+}
+
+.card-front .chinese-char {
+  font-size: clamp(2.8rem, 11vw, 4.8rem);
+  font-weight: 600;
+  color: #f0f0f0;
+  line-height: 1.2;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .card-back .pinyin {
   font-size: 1.8rem;
   font-weight: 700;
   color: #ffaa66;
-  margin-bottom: 10px;
-  text-align: center;
+  margin-bottom: 12px;
 }
 
 .card-back .meaning {
@@ -214,9 +246,6 @@ body {
   font-weight: 500;
   color: #ffffff;
   margin-bottom: 16px;
-  text-align: center;
-  word-wrap: break-word;
-  max-width: 100%;
 }
 
 .breakdown {
@@ -226,6 +255,8 @@ body {
   margin-top: 8px;
   width: 100%;
   text-align: left;
+  max-height: 40%;
+  overflow-y: auto;
 }
 
 .breakdown-item {
@@ -249,36 +280,6 @@ body {
   font-size: 0.7rem;
   color: #88aaff;
   margin-top: 2px;
-}
-
-/* Точки прогресса - всегда внизу */
-.progress-dots {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 16px;
-  margin-bottom: 0;
-  width: 100%;
-}
-
-.progress-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.25);
-  transition: background 0.2s ease;
-}
-
-.progress-dot.filled {
-  background: #ff6b2c;
-}
-
-.card-front .chinese-char {
-  font-size: clamp(2.8rem, 11vw, 4.8rem);
-  font-weight: 600;
-  color: #f0f0f0;
-  line-height: 1.2;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 /* Цветовые темы */
