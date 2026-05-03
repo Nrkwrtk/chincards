@@ -190,14 +190,24 @@ body {
   transform: rotateY(180deg);
   overflow-y: auto;
   justify-content: center;
+  position: relative;
+}
+
+.content-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
 }
 
 .progress-dots {
   display: flex;
   justify-content: center;
   gap: 8px;
-  margin-top: 16px;
-  margin-bottom: 4px;
+  margin-top: auto;
+  margin-bottom: 8px;
+  padding-top: 12px;
 }
 
 .progress-dot {
@@ -210,7 +220,6 @@ body {
 
 .progress-dot.filled {
   background: #ff6b2c;
-  box-shadow: 0 0 4px rgba(255, 107, 44, 0.5);
 }
 
 .card-front.yellow, .card-back.yellow {
