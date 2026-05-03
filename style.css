@@ -174,9 +174,6 @@ body {
   border-radius: 32px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
-  text-align: center;
   padding: 24px 20px;
 }
 
@@ -184,15 +181,18 @@ body {
   background: linear-gradient(145deg, #1a1a2a, #252540);
   transform: rotateY(0deg);
   justify-content: center;
+  align-items: center;
 }
 
 .card-back {
   background: linear-gradient(145deg, #1e1e30, #282844);
   transform: rotateY(180deg);
+  justify-content: space-between;
+  align-items: center;
 }
 
-/* Контент на обратной стороне */
-.card-content {
+/* Контент на обратной стороне - занимает всё пространство, центрируется */
+.card-back-content {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -201,7 +201,6 @@ body {
   width: 100%;
 }
 
-/* Пиньинь крупный */
 .card-back .pinyin {
   font-size: 1.8rem;
   font-weight: 700;
@@ -210,7 +209,6 @@ body {
   text-align: center;
 }
 
-/* Перевод крупный */
 .card-back .meaning {
   font-size: 1.4rem;
   font-weight: 500;
@@ -221,7 +219,6 @@ body {
   max-width: 100%;
 }
 
-/* Разбор — мелкий */
 .breakdown {
   font-size: 0.8rem;
   font-weight: 400;
@@ -254,14 +251,14 @@ body {
   margin-top: 2px;
 }
 
-/* Точки прогресса — приклеены к низу */
+/* Точки прогресса - всегда внизу */
 .progress-dots {
   display: flex;
   justify-content: center;
   gap: 8px;
   margin-top: 16px;
   margin-bottom: 0;
-  padding-top: 8px;
+  width: 100%;
 }
 
 .progress-dot {
@@ -276,7 +273,6 @@ body {
   background: #ff6b2c;
 }
 
-/* Лицевая сторона */
 .card-front .chinese-char {
   font-size: clamp(2.8rem, 11vw, 4.8rem);
   font-weight: 600;
@@ -310,7 +306,6 @@ body {
   border: 2px solid #1a66cc;
 }
 
-/* Анимации свайпа */
 .card-container.swipe-left .card {
   transform: translateX(-120%) rotate(-15deg);
   opacity: 0;
