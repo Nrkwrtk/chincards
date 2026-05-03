@@ -226,7 +226,7 @@ function initPhrasesMode() {
   if (cardEl) cardEl.classList.remove('flipped');
   updateDisplay();
   updateCardStyle();
-  updateProgressBar();
+  updateProgressDots();
 }
 
 function getNextDateForPhrase(currentLevel) {
@@ -264,7 +264,7 @@ function loadNextCard() {
   
   updateDisplay();
   updateCardStyle();
-  updateProgressBar();
+  updateProgressDots();
 }
 
 function getWordById(id) {
@@ -278,8 +278,8 @@ function getCurrentCard() {
   return getWordById(currentCardId);
 }
 
-function updateProgressBar() {
-  const container = document.getElementById('progressBarContainer');
+function updateProgressDots() {
+  const container = document.getElementById('progressDots');
   if (!container) return;
   
   const card = getCurrentCard();
@@ -295,7 +295,7 @@ function updateProgressBar() {
   let html = '';
   for (let i = 0; i < 10; i++) {
     const filled = i < successCount;
-    html += `<div class="progress-segment ${filled ? 'filled' : ''}"></div>`;
+    html += `<div class="progress-dot ${filled ? 'filled' : ''}"></div>`;
   }
   container.innerHTML = html;
 }
@@ -308,7 +308,7 @@ function updateDisplay() {
     document.getElementById('pinyin').innerHTML = '';
     document.getElementById('meaning').innerHTML = 'Все слова выучены!';
     document.getElementById('breakdown').innerHTML = '';
-    updateProgressBar();
+    updateProgressDots();
     return;
   }
   
@@ -342,7 +342,7 @@ function updateDisplay() {
     document.getElementById('breakdown').innerHTML = '';
   }
   
-  updateProgressBar();
+  updateProgressDots();
   updateCardStyle();
 }
 
