@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
-  <title>ChinCards</title>
+  <title>ChinCards — HSK карточки</title>
   <link rel="stylesheet" href="style.css">
   <link rel="manifest" href="manifest.json">
   <meta name="mobile-web-app-capable" content="yes">
@@ -12,20 +12,20 @@
   <meta name="apple-mobile-web-app-title" content="ChinCards">
   <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23ff9f4a'/%3E%3Ctext x='50' y='67' font-size='50' text-anchor='middle' fill='white'%3E中%3C/text%3E%3C/svg%3E">
 </head>
-<body ontouchstart="">
+<body>
   <div class="app">
     <div class="header">
       <div class="lang-switch">
-        <button data-lang="ru" class="lang-btn active">🇷🇺 RU</button>
-        <button data-lang="en" class="lang-btn">🇬🇧 EN</button>
+        <button data-lang="ru" class="lang-btn active">🇷🇺 Русский</button>
+        <button data-lang="en" class="lang-btn">🇬🇧 English</button>
       </div>
       
       <div class="level-row">
         <span class="level-label">HSK</span>
         <div class="level-switch">
-          <button data-level="12" class="level-btn active">1-2</button>
+          <button data-level="12" class="level-btn active">1–2</button>
           <button data-level="3" class="level-btn">3</button>
-          <button data-level="phrase" class="level-btn phrase-mode-btn">F</button>
+          <button data-level="phrase" class="level-btn phrase-mode-btn">📖 Фразы</button>
         </div>
       </div>
       
@@ -36,18 +36,18 @@
         </div>
         <div class="stat-card">
           <span class="stat-value" id="totalLearned">0</span>
-          <span class="stat-label" id="learnedLabel">уже знаю</span>
+          <span class="stat-label" id="learnedLabel">выучено</span>
         </div>
       </div>
     </div>
 
-    <div class="card-container">
+    <div class="card-wrapper">
       <div class="card" id="flashcard">
         <div class="card-front">
           <div class="chinese-char" id="chineseChar"></div>
         </div>
         <div class="card-back">
-          <div class="card-back-content">
+          <div class="card-back-inner">
             <div class="pinyin" id="pinyin"></div>
             <div class="meaning" id="meaning"></div>
             <div class="breakdown" id="breakdown"></div>
