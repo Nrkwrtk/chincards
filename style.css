@@ -246,6 +246,7 @@ body {
   margin-bottom: 16px;
 }
 
+/* Крупный breakdown */
 .breakdown {
   font-size: 1rem;
   font-weight: 400;
@@ -256,27 +257,32 @@ body {
 }
 
 .breakdown-item {
-  margin: 10px 0;
+  margin: 12px 0;
   padding: 0;
   text-align: center;
 }
 
-.breakdown-char {
-  font-size: 1.3rem;
+.breakdown-item .breakdown-char {
+  font-size: 1.4rem;
   font-weight: 600;
   color: #f0f0f0;
+  display: inline-block;
 }
 
-.breakdown-pinyin {
-  font-size: 1rem;
+.breakdown-item .breakdown-pinyin {
+  font-size: 1.1rem;
+  font-weight: 500;
   color: #ffaa66;
-  margin-left: 8px;
+  margin-left: 10px;
+  display: inline-block;
 }
 
-.breakdown-translation {
-  font-size: 0.95rem;
+.breakdown-item .breakdown-translation {
+  font-size: 1rem;
+  font-weight: 400;
   color: #88aaff;
-  margin-top: 4px;
+  margin-top: 6px;
+  display: block;
 }
 
 .card-front.yellow, .card-back.yellow {
