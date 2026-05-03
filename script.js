@@ -300,35 +300,6 @@ function updateProgressDots() {
   container.innerHTML = html;
 }
 
-// Разбор составного слова на отдельные иероглифы
-function getCharacterBreakdown(hanzi) {
-  if (!hanzi || hanzi.length <= 1) return null;
-  
-  const chars = hanzi.split('');
-  const breakdown = [];
-  
-  for (let char of chars) {
-    const wordEntry = fullDictionary.find(w => w.hanzi === char);
-    if (wordEntry) {
-      breakdown.push({
-        char: char,
-        pinyin: wordEntry.pinyin,
-        translation_ru: wordEntry.translations?.rus || '—',
-        translation_en: wordEntry.translations?.eng || '—'
-      });
-    } else {
-      breakdown.push({
-        char: char,
-        pinyin: '?',
-        translation_ru: '—',
-        translation_en: '—'
-      });
-    }
-  }
-  
-  return breakdown;
-}
-
 function updateDisplay() {
   const card = getCurrentCard();
   
@@ -369,11 +340,10 @@ function updateDisplay() {
     const translation = currentLanguage === 'ru' ? card.translations.rus : card.translations.eng;
     document.getElementById('meaning').innerHTML = translation;
     
-    // Разбор составного слова
-    const breakdown = getCharacterBreakdown(card.hanzi);
-    if (breakdown && breakdown.length > 1) {
+    // Используем breakdown из базы если есть
+    if (card.breakdown && card.breakdown.length > 0) {
       let breakdownHtml = '<div style="margin-top: 12px; width: 100%;">';
-      for (let part of breakdown) {
+      for (let part of card.breakdown) {
         const wordTranslation = currentLanguage === 'ru' ? part.translation_ru : part.translation_en;
         breakdownHtml += `
           <div style="margin: 8px 0; padding: 6px; border-top: 1px solid rgba(136, 170, 255, 0.2);">
