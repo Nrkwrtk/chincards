@@ -1,25 +1,27 @@
 let fullDictionary = [];
 let activeLevel = '12';
-let isPhraseOnlyMode = false;
 let currentLanguage = 'ru';
 
-let learnedIds = new Set();
-let yellowCards = new Map();
-let redCards = new Map();
+// Новая система: прогресс слов
+// Для каждого слова храним: { successCount: number (0-10), dueDate: Date (null если не на отсрочке) }
+let wordProgress = new Map(); // key: wordId, value: { successCount, dueDate }
 
+let learnedIds = new Set(); // полностью выученные (10 успехов)
+let currentDeck = [];        // массив ID слов, которые сейчас в ротации (всегда 20)
+let currentDeckIndex = 0;
+let currentCardId = null;
+let isFlipped = false;
+
+// Фразы пока оставляем как есть (или позже переделаем)
+let phrasesDatabase = [];
 let phraseStatus = new Map();
 let learnedPhrasesIds = new Set();
+let isPhraseOnlyMode = false;
 
-let phrasesDatabase = [];
-
-let currentDeck = [];
-let currentDeckIndex = 0;
-
-let currentCard = null;
-let isFlipped = false;
 let touchStartX = 0;
 let isSwiping = false;
 
+// ========== ЗАГРУЗКА ==========
 async function loadDictionary() {
   try {
     const response = await fetch('HSK14ruen.json');
@@ -27,11 +29,14 @@ async function loadDictionary() {
     fullDictionary = await response.json();
     console.log(`✅ Загружено слов HSK: ${fullDictionary.length}`);
     
+    // Добавляем id если нет
+    for (let i = 0; i < fullDictionary.length; i++) {
+      if (!fullDictionary[i].id) fullDictionary[i].id = `w_${i}`;
+    }
+    
     const phrasesResponse = await fetch('phrases.json');
     if (!phrasesResponse.ok) throw new Error(`HTTP ${phrasesResponse.status}`);
     const phrasesData = await phrasesResponse.json();
-    console.log(`✅ Загружено фраз: ${phrasesData.length}`);
-    
     for (let i = 0; i < phrasesData.length; i++) {
       phrasesDatabase.push({
         ...phrasesData[i],
@@ -39,36 +44,10 @@ async function loadDictionary() {
         isPhrase: true
       });
     }
+    console.log(`✅ Загружено фраз: ${phrasesDatabase.length}`);
     
-    const saved = localStorage.getItem('chincards_learned');
-    if (saved) learnedIds = new Set(JSON.parse(saved));
-    
-    const savedY = localStorage.getItem('chincards_yellow');
-    if (savedY) {
-      const parsed = JSON.parse(savedY);
-      yellowCards = new Map(parsed.map(p => [p.id, new Date(p.until)]));
-    }
-    
-    const savedR = localStorage.getItem('chincards_red');
-    if (savedR) {
-      const parsed = JSON.parse(savedR);
-      redCards = new Map(parsed.map(p => [p.id, new Date(p.until)]));
-    }
-    
-    for (let i = 0; i < fullDictionary.length; i++) {
-      if (!fullDictionary[i].id) fullDictionary[i].id = i + 1;
-    }
-    
-    const savedPhraseStatus = localStorage.getItem('chincards_phrase_status');
-    if (savedPhraseStatus) {
-      const parsed = JSON.parse(savedPhraseStatus);
-      for (let item of parsed) {
-        phraseStatus.set(item.id, { level: item.level, returnDate: new Date(item.returnDate) });
-      }
-    }
-    
-    const savedPhrasesLearned = localStorage.getItem('chincards_phrases_learned');
-    if (savedPhrasesLearned) learnedPhrasesIds = new Set(JSON.parse(savedPhrasesLearned));
+    // Загружаем сохранения
+    loadSavedData();
     
     initLevel(activeLevel);
   } catch(e) {
@@ -77,10 +56,44 @@ async function loadDictionary() {
   }
 }
 
+function loadSavedData() {
+  const saved = localStorage.getItem('chincards_learned');
+  if (saved) learnedIds = new Set(JSON.parse(saved));
+  
+  const savedProgress = localStorage.getItem('chincards_word_progress');
+  if (savedProgress) {
+    const parsed = JSON.parse(savedProgress);
+    for (let [id, data] of Object.entries(parsed)) {
+      wordProgress.set(id, {
+        successCount: data.successCount,
+        dueDate: data.dueDate ? new Date(data.dueDate) : null
+      });
+    }
+  }
+  
+  const savedPhraseStatus = localStorage.getItem('chincards_phrase_status');
+  if (savedPhraseStatus) {
+    const parsed = JSON.parse(savedPhraseStatus);
+    for (let item of parsed) {
+      phraseStatus.set(item.id, { level: item.level, returnDate: new Date(item.returnDate) });
+    }
+  }
+  
+  const savedPhrasesLearned = localStorage.getItem('chincards_phrases_learned');
+  if (savedPhrasesLearned) learnedPhrasesIds = new Set(JSON.parse(savedPhrasesLearned));
+}
+
 function saveAll() {
   localStorage.setItem('chincards_learned', JSON.stringify([...learnedIds]));
-  localStorage.setItem('chincards_yellow', JSON.stringify(Array.from(yellowCards.entries()).map(([id, d]) => ({ id, until: d.toISOString() }))));
-  localStorage.setItem('chincards_red', JSON.stringify(Array.from(redCards.entries()).map(([id, d]) => ({ id, until: d.toISOString() }))));
+  
+  const progressObj = {};
+  for (let [id, data] of wordProgress.entries()) {
+    progressObj[id] = {
+      successCount: data.successCount,
+      dueDate: data.dueDate ? data.dueDate.toISOString() : null
+    };
+  }
+  localStorage.setItem('chincards_word_progress', JSON.stringify(progressObj));
   
   const phraseStatusArray = Array.from(phraseStatus.entries()).map(([id, data]) => ({
     id, level: data.level, returnDate: data.returnDate.toISOString()
@@ -89,38 +102,7 @@ function saveAll() {
   localStorage.setItem('chincards_phrases_learned', JSON.stringify([...learnedPhrasesIds]));
 }
 
-function getAvailablePhrases() {
-  const now = new Date();
-  return phrasesDatabase.filter(p => {
-    if (learnedPhrasesIds.has(p.id)) return false;
-    const status = phraseStatus.get(p.id);
-    if (status && status.returnDate > now) return false;
-    return true;
-  });
-}
-
-function checkReturns() {
-  const now = new Date();
-  for (let [id, date] of yellowCards) if (date <= now) yellowCards.delete(id);
-  for (let [id, date] of redCards) if (date <= now) redCards.delete(id);
-  for (let [id, status] of phraseStatus) if (status.returnDate <= now) phraseStatus.delete(id);
-  saveAll();
-}
-
-function getNextDateForPhrase(currentLevel) {
-  const d = new Date();
-  let days = currentLevel === 0 ? 2 : 30;
-  d.setDate(d.getDate() + days);
-  return d;
-}
-
-function getNextDateForWord(type) {
-  const d = new Date();
-  let days = type === 'yellow' ? 2 : 7;
-  d.setDate(d.getDate() + days);
-  return d;
-}
-
+// ========== ПОЛУЧЕНИЕ СЛОВ ДЛЯ УРОВНЯ ==========
 function getWordsForLevel(level) {
   if (level === '12') {
     return fullDictionary.filter(w => w.level == 1 || w.level == 2);
@@ -132,12 +114,39 @@ function getWordsForLevel(level) {
   return [];
 }
 
+// ========== ПОЛУЧЕНИЕ ПУЛА ДОСТУПНЫХ СЛОВ (ещё не выучены и не на отсрочке) ==========
+function getAvailableWordIds() {
+  const allWords = getWordsForLevel(activeLevel);
+  const now = new Date();
+  
+  return allWords.filter(w => {
+    // Уже выучено навсегда
+    if (learnedIds.has(w.id)) return false;
+    
+    const progress = wordProgress.get(w.id);
+    // Нет прогресса → доступно
+    if (!progress) return true;
+    
+    // Есть dueDate и оно ещё не прошло → недоступно
+    if (progress.dueDate && progress.dueDate > now) return false;
+    
+    // Иначе доступно
+    return true;
+  }).map(w => w.id);
+}
+
+// ========== ПОСТРОЕНИЕ КОЛОДЫ (ровно 20 карточек) ==========
 function buildDeck() {
-  if (isPhraseOnlyMode) return [];
-  const allLevelWords = getWordsForLevel(activeLevel);
-  const available = allLevelWords.filter(w => !learnedIds.has(w.id) && !yellowCards.has(w.id) && !redCards.has(w.id));
-  console.log(`🔨 Колода для уровня ${activeLevel}: ${available.length} слов`);
-  return shuffleArray([...available]);
+  const availableIds = getAvailableWordIds();
+  console.log(`📦 Доступно слов для уровня ${activeLevel}: ${availableIds.length}`);
+  
+  if (availableIds.length === 0) return [];
+  
+  // Перемешиваем
+  const shuffled = shuffleArray([...availableIds]);
+  
+  // Берём первые 20 (или сколько есть)
+  return shuffled.slice(0, 20);
 }
 
 function shuffleArray(arr) {
@@ -148,67 +157,93 @@ function shuffleArray(arr) {
   return arr;
 }
 
+// ========== ИНИЦИАЛИЗАЦИЯ ==========
 function initLevel(level) {
   console.log('=== ИНИЦИАЛИЗАЦИЯ ===');
   
   if (level === 'phrase') {
     isPhraseOnlyMode = true;
     console.log('Режим: ТОЛЬКО ФРАЗЫ');
-  } else {
-    isPhraseOnlyMode = false;
-    activeLevel = level;
-    console.log('Режим: УРОВЕНЬ ' + level);
+    initPhrasesMode();
+    return;
   }
   
-  checkReturns();
+  isPhraseOnlyMode = false;
+  activeLevel = level;
+  console.log('Режим: УРОВЕНЬ ' + level);
+  
+  // Очищаем просроченные dueDate
+  const now = new Date();
+  for (let [id, progress] of wordProgress.entries()) {
+    if (progress.dueDate && progress.dueDate <= now) {
+      progress.dueDate = null;
+      wordProgress.set(id, progress);
+    }
+  }
+  
   currentDeck = buildDeck();
   currentDeckIndex = 0;
+  
+  console.log(`🃏 Колода из ${currentDeck.length} слов`);
   
   updateStats();
   loadNextCard();
 }
 
-function loadNextCard() {
+// ========== ФРАЗЫ (оставляем как было, можно позже переделать) ==========
+function getAvailablePhrases() {
+  const now = new Date();
+  return phrasesDatabase.filter(p => {
+    if (learnedPhrasesIds.has(p.id)) return false;
+    const status = phraseStatus.get(p.id);
+    if (status && status.returnDate > now) return false;
+    return true;
+  });
+}
+
+function initPhrasesMode() {
   const availablePhrases = getAvailablePhrases();
-  
-  // РЕЖИМ ТОЛЬКО ФРАЗЫ
+  if (availablePhrases.length > 0) {
+    const randomIndex = Math.floor(Math.random() * availablePhrases.length);
+    currentCardId = availablePhrases[randomIndex].id;
+  } else {
+    currentCardId = null;
+  }
+  isFlipped = false;
+  const cardEl = document.getElementById('flashcard');
+  if (cardEl) cardEl.classList.remove('flipped');
+  updateDisplay();
+  updateCardStyle();
+}
+
+function getNextDateForPhrase(currentLevel) {
+  const d = new Date();
+  let days = currentLevel === 0 ? 2 : 30;
+  d.setDate(d.getDate() + days);
+  return d;
+}
+
+// ========== ЗАГРУЗКА СЛЕДУЮЩЕЙ КАРТОЧКИ ==========
+function loadNextCard() {
   if (isPhraseOnlyMode) {
-    if (availablePhrases.length > 0) {
-      const randomIndex = Math.floor(Math.random() * availablePhrases.length);
-      currentCard = availablePhrases[randomIndex];
-      console.log('💬 [ФРАЗЫ]', currentCard.text);
-    } else {
-      currentCard = null;
-      console.log('❌ Нет доступных фраз');
-    }
-    
-    isFlipped = false;
-    const cardEl = document.getElementById('flashcard');
-    if (cardEl) cardEl.classList.remove('flipped');
-    
-    updateDisplay();
-    updateCardStyle();
+    initPhrasesMode();
     return;
   }
   
-  // ОБЫЧНЫЙ РЕЖИМ (только слова)
-  if (currentDeckIndex >= currentDeck.length || currentDeck.length === 0) {
+  // Если колода пуста или дошли до конца, перестраиваем колоду
+  if (currentDeck.length === 0 || currentDeckIndex >= currentDeck.length) {
     currentDeck = buildDeck();
     currentDeckIndex = 0;
   }
   
   if (currentDeck.length > 0 && currentDeckIndex < currentDeck.length) {
-    currentCard = currentDeck[currentDeckIndex];
+    currentCardId = currentDeck[currentDeckIndex];
     currentDeckIndex++;
-    console.log(`📖 СЛОВО ${currentDeckIndex}/${currentDeck.length}: ${currentCard.hanzi}`);
-  } else if (availablePhrases.length > 0) {
-    // Запасной вариант: если слов нет, показываем фразу
-    const randomIndex = Math.floor(Math.random() * availablePhrases.length);
-    currentCard = availablePhrases[randomIndex];
-    console.log('💬 НЕТ СЛОВ, ФРАЗА:', currentCard.text);
+    const word = getWordById(currentCardId);
+    console.log(`📖 СЛОВО ${currentDeckIndex}/${currentDeck.length}: ${word?.hanzi || word?.text || currentCardId}`);
   } else {
-    currentCard = null;
-    console.log('❌ Нет ни слов, ни фраз');
+    currentCardId = null;
+    console.log('❌ Нет доступных слов');
   }
   
   isFlipped = false;
@@ -219,59 +254,39 @@ function loadNextCard() {
   updateCardStyle();
 }
 
-function updateCardStyle() {
-  const card = document.getElementById('flashcard');
-  if (!card || !currentCard) return;
-  
-  const front = card.querySelector('.card-front');
-  const back = card.querySelector('.card-back');
-  
-  front.classList.remove('yellow', 'red', 'phrase-blue', 'phrase-darkblue', 'phrase-navy');
-  back.classList.remove('yellow', 'red', 'phrase-blue', 'phrase-darkblue', 'phrase-navy');
-  
-  if (currentCard.isPhrase) {
-    const status = phraseStatus.get(currentCard.id);
-    const level = status ? status.level : 0;
-    if (level === 0) {
-      front.classList.add('phrase-blue');
-      back.classList.add('phrase-blue');
-    } else if (level === 1) {
-      front.classList.add('phrase-darkblue');
-      back.classList.add('phrase-darkblue');
-    } else {
-      front.classList.add('phrase-navy');
-      back.classList.add('phrase-navy');
-    }
-  } else {
-    if (yellowCards.has(currentCard.id)) {
-      front.classList.add('yellow');
-      back.classList.add('yellow');
-    } else if (redCards.has(currentCard.id)) {
-      front.classList.add('red');
-      back.classList.add('red');
-    }
-  }
+function getWordById(id) {
+  return fullDictionary.find(w => w.id === id);
 }
 
+function getCurrentCard() {
+  if (isPhraseOnlyMode) {
+    return phrasesDatabase.find(p => p.id === currentCardId);
+  }
+  return getWordById(currentCardId);
+}
+
+// ========== ОБНОВЛЕНИЕ ОТОБРАЖЕНИЯ ==========
 function updateDisplay() {
-  if (!currentCard) {
+  const card = getCurrentCard();
+  
+  if (!card) {
     document.getElementById('chineseChar').innerText = '🎉';
     document.getElementById('pinyin').innerHTML = '';
-    document.getElementById('meaning').innerHTML = 'Все слова и фразы выучены!';
+    document.getElementById('meaning').innerHTML = 'Все слова выучены!';
     document.getElementById('breakdown').innerHTML = '';
     return;
   }
   
-  document.getElementById('chineseChar').innerText = currentCard.text || currentCard.hanzi;
-  document.getElementById('pinyin').innerHTML = currentCard.pinyin;
+  document.getElementById('chineseChar').innerText = card.text || card.hanzi;
+  document.getElementById('pinyin').innerHTML = card.pinyin;
   
-  if (currentCard.isPhrase) {
-    const fullTranslation = currentLanguage === 'ru' ? currentCard.translation_ru : currentCard.translation_en;
+  if (card.isPhrase) {
+    const fullTranslation = currentLanguage === 'ru' ? card.translation_ru : card.translation_en;
     document.getElementById('meaning').innerHTML = fullTranslation;
     
-    if (currentCard.breakdown && currentCard.breakdown.length > 0) {
+    if (card.breakdown && card.breakdown.length > 0) {
       let breakdownHtml = '<div style="margin-top: 12px; width: 100%;">';
-      for (let part of currentCard.breakdown) {
+      for (let part of card.breakdown) {
         const wordTranslation = currentLanguage === 'ru' ? part.translation_ru : part.translation_en;
         breakdownHtml += `
           <div style="margin: 8px 0; padding: 6px; border-top: 1px solid rgba(136, 170, 255, 0.2);">
@@ -287,7 +302,7 @@ function updateDisplay() {
       document.getElementById('breakdown').innerHTML = '';
     }
   } else {
-    const translation = currentLanguage === 'ru' ? currentCard.translations.rus : currentCard.translations.eng;
+    const translation = currentLanguage === 'ru' ? card.translations.rus : card.translations.eng;
     document.getElementById('meaning').innerHTML = translation;
     document.getElementById('breakdown').innerHTML = '';
   }
@@ -295,13 +310,173 @@ function updateDisplay() {
   updateCardStyle();
 }
 
-function updateStats() {
-  const allLevelWords = getWordsForLevel(activeLevel);
-  const left = allLevelWords.filter(w => !learnedIds.has(w.id) && !yellowCards.has(w.id) && !redCards.has(w.id)).length;
-  document.getElementById('cardsLeft').innerText = left;
-  document.getElementById('totalLearned').innerText = learnedIds.size;
+function updateCardStyle() {
+  const cardEl = document.getElementById('flashcard');
+  if (!cardEl) return;
+  
+  const front = cardEl.querySelector('.card-front');
+  const back = cardEl.querySelector('.card-back');
+  
+  front.classList.remove('yellow', 'red', 'phrase-blue', 'phrase-darkblue', 'phrase-navy');
+  back.classList.remove('yellow', 'red', 'phrase-blue', 'phrase-darkblue', 'phrase-navy');
+  
+  const card = getCurrentCard();
+  if (!card) return;
+  
+  if (card.isPhrase) {
+    const status = phraseStatus.get(card.id);
+    const level = status ? status.level : 0;
+    if (level === 0) {
+      front.classList.add('phrase-blue');
+      back.classList.add('phrase-blue');
+    } else if (level === 1) {
+      front.classList.add('phrase-darkblue');
+      back.classList.add('phrase-darkblue');
+    } else {
+      front.classList.add('phrase-navy');
+      back.classList.add('phrase-navy');
+    }
+  } else {
+    const progress = wordProgress.get(card.id);
+    if (progress && progress.dueDate && progress.dueDate > new Date()) {
+      // Слово на отсрочке (показываем жёлтым)
+      front.classList.add('yellow');
+      back.classList.add('yellow');
+    }
+  }
 }
 
+function updateStats() {
+  const allWords = getWordsForLevel(activeLevel);
+  const learnedCount = learnedIds.size;
+  const leftCount = allWords.length - learnedCount;
+  document.getElementById('cardsLeft').innerText = leftCount;
+  document.getElementById('totalLearned').innerText = learnedCount;
+}
+
+// ========== ОСНОВНАЯ ЛОГИКА СВАЙПОВ ==========
+function onSwipeRight() { // ЗНАЮ
+  const card = getCurrentCard();
+  if (!card) return;
+  
+  console.log('👉 ЗНАЮ:', card.text || card.hanzi);
+  
+  if (card.isPhrase) {
+    // Фразы пока по старой логике
+    const currentStatus = phraseStatus.get(card.id);
+    const currentLevel = currentStatus ? currentStatus.level : 0;
+    
+    if (currentLevel === 0) {
+      phraseStatus.set(card.id, { level: 1, returnDate: getNextDateForPhrase(0) });
+    } else if (currentLevel === 1) {
+      phraseStatus.set(card.id, { level: 2, returnDate: getNextDateForPhrase(1) });
+    } else {
+      phraseStatus.set(card.id, { level: 2, returnDate: getNextDateForPhrase(1) });
+    }
+    
+    if (currentLevel === 2) {
+      learnedPhrasesIds.add(card.id);
+      phraseStatus.delete(card.id);
+    }
+    
+    saveAll();
+    initLevel('phrase');
+    animate('right');
+    return;
+  }
+  
+  // Логика для слов
+  let progress = wordProgress.get(card.id);
+  if (!progress) {
+    progress = { successCount: 0, dueDate: null };
+  }
+  
+  // Увеличиваем счётчик успехов
+  progress.successCount = (progress.successCount || 0) + 1;
+  
+  if (progress.successCount >= 10) {
+    // Полностью выучено!
+    learnedIds.add(card.id);
+    wordProgress.delete(card.id);
+    console.log(`  ✅ Слово ВЫУЧЕНО навсегда! +1 к счётчику`);
+  } else {
+    // Выпадает на N дней (2 * successCount, но не более 20)
+    let days = progress.successCount * 2;
+    if (days > 20) days = 20;
+    const dueDate = new Date();
+    dueDate.setDate(dueDate.getDate() + days);
+    progress.dueDate = dueDate;
+    wordProgress.set(card.id, progress);
+    console.log(`  → Слово выпало на ${days} дней (успехов: ${progress.successCount}/10)`);
+  }
+  
+  saveAll();
+  
+  // Удаляем текущее слово из колоды и добавляем новое
+  replaceCurrentCardInDeck();
+  
+  updateStats();
+  loadNextCard();
+  animate('right');
+}
+
+function onSwipeLeft() { // НЕ ЗНАЮ
+  const card = getCurrentCard();
+  if (!card) return;
+  
+  console.log('👈 НЕ ЗНАЮ:', card.text || card.hanzi);
+  
+  if (card.isPhrase) {
+    phraseStatus.delete(card.id);
+    saveAll();
+    initLevel('phrase');
+    animate('left');
+    return;
+  }
+  
+  // Сбрасываем прогресс слова (удаляем из wordProgress)
+  wordProgress.delete(card.id);
+  console.log(`  → Прогрес слова сброшен, возвращено в пул`);
+  
+  saveAll();
+  
+  // Удаляем текущее слово из колоды и добавляем новое
+  replaceCurrentCardInDeck();
+  
+  updateStats();
+  loadNextCard();
+  animate('left');
+}
+
+function replaceCurrentCardInDeck() {
+  // Удаляем текущий ID из currentDeck
+  const index = currentDeck.indexOf(currentCardId);
+  if (index !== -1) {
+    currentDeck.splice(index, 1);
+  }
+  
+  // Добавляем новое слово из пула доступных
+  const availableIds = getAvailableWordIds();
+  // Исключаем уже имеющиеся в колоде
+  const newAvailable = availableIds.filter(id => !currentDeck.includes(id));
+  
+  if (newAvailable.length > 0) {
+    const randomIndex = Math.floor(Math.random() * newAvailable.length);
+    const newWordId = newAvailable[randomIndex];
+    currentDeck.push(newWordId);
+    console.log(`  → Добавлено новое слово в колоду: ${getWordById(newWordId)?.hanzi}`);
+  } else {
+    console.log(`  → Нет новых слов для добавления`);
+  }
+  
+  // Корректируем индекс (если удалили текущий и он был до текущего индекса)
+  if (currentDeckIndex > 0) {
+    currentDeckIndex--;
+  }
+  if (currentDeckIndex < 0) currentDeckIndex = 0;
+}
+
+// ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
 function speak(t) {
   if (!window.speechSynthesis) return;
   const u = new SpeechSynthesisUtterance(t);
@@ -312,86 +487,16 @@ function speak(t) {
 }
 
 function flip() {
-  if (!currentCard) return;
-  const card = document.getElementById('flashcard');
+  const card = getCurrentCard();
+  if (!card) return;
+  const cardEl = document.getElementById('flashcard');
   isFlipped = !isFlipped;
   if (isFlipped) {
-    card.classList.add('flipped');
-    speak(currentCard.text || currentCard.hanzi);
+    cardEl.classList.add('flipped');
+    speak(card.text || card.hanzi);
   } else {
-    card.classList.remove('flipped');
+    cardEl.classList.remove('flipped');
   }
-}
-
-function onSwipeLeft() {
-  if (!currentCard) return;
-  console.log('👈 НЕ ЗНАЮ:', currentCard.text || currentCard.hanzi);
-  
-  if (currentCard.isPhrase) {
-    phraseStatus.delete(currentCard.id);
-  } else {
-    if (redCards.has(currentCard.id)) {
-      redCards.delete(currentCard.id);
-      yellowCards.set(currentCard.id, getNextDateForWord('yellow'));
-    } else if (yellowCards.has(currentCard.id)) {
-      yellowCards.delete(currentCard.id);
-    }
-  }
-  
-  saveAll();
-  // Перезапускаем текущий режим
-  if (isPhraseOnlyMode) {
-    initLevel('phrase');
-  } else {
-    initLevel(activeLevel);
-  }
-  animate('left');
-}
-
-function onSwipeRight() {
-  if (!currentCard) return;
-  console.log('👉 ЗНАЮ:', currentCard.text || currentCard.hanzi);
-  
-  if (currentCard.isPhrase) {
-    const currentStatus = phraseStatus.get(currentCard.id);
-    const currentLevel = currentStatus ? currentStatus.level : 0;
-    
-    if (currentLevel === 0) {
-      phraseStatus.set(currentCard.id, { level: 1, returnDate: getNextDateForPhrase(0) });
-      console.log('  → Фраза стала СИНЕЙ (2 дня)');
-    } else if (currentLevel === 1) {
-      phraseStatus.set(currentCard.id, { level: 2, returnDate: getNextDateForPhrase(1) });
-      console.log('  → Фраза стала ТЁМНО-СИНЕЙ (месяц)');
-    } else {
-      phraseStatus.set(currentCard.id, { level: 2, returnDate: getNextDateForPhrase(1) });
-      console.log('  → Фраза тёмно-синяя, скрыта ещё на месяц');
-    }
-  } else {
-    if (yellowCards.has(currentCard.id)) {
-      yellowCards.delete(currentCard.id);
-      redCards.set(currentCard.id, getNextDateForWord('red'));
-      console.log('  → Слово стало КРАСНЫМ (7 дней)');
-    } else if (redCards.has(currentCard.id)) {
-      learnedIds.add(currentCard.id);
-      redCards.delete(currentCard.id);
-      console.log('  → Слово ВЫУЧЕНО! +1');
-    } else if (learnedIds.has(currentCard.id)) {
-      learnedIds.delete(currentCard.id);
-      redCards.set(currentCard.id, getNextDateForWord('red'));
-      console.log('  → Слово на ПОВТОРЕНИЕ');
-    } else {
-      yellowCards.set(currentCard.id, getNextDateForWord('yellow'));
-      console.log('  → Слово стало ЖЁЛТЫМ (2 дня)');
-    }
-  }
-  
-  saveAll();
-  if (isPhraseOnlyMode) {
-    initLevel('phrase');
-  } else {
-    initLevel(activeLevel);
-  }
-  animate('right');
 }
 
 function animate(dir) {
@@ -493,7 +598,7 @@ function initSpeech() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('🚀 ПРИЛОЖЕНИЕ ЗАПУЩЕНО');
+  console.log('🚀 ПРИЛОЖЕНИЕ ЗАПУЩЕНО (новая версия с 20 карточками)');
   loadDictionary();
   setupLevels();
   setupLanguage();
