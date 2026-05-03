@@ -247,36 +247,36 @@ body {
 }
 
 .breakdown {
-  font-size: 0.8rem;
+  font-size: 1rem;
   font-weight: 400;
   color: #88aaff;
-  margin-top: 8px;
+  margin-top: 12px;
   width: 100%;
   text-align: center;
 }
 
 .breakdown-item {
-  margin: 6px 0;
+  margin: 8px 0;
   padding: 0;
   text-align: center;
 }
 
 .breakdown-char {
-  font-size: 1rem;
+  font-size: 1.2rem;
   font-weight: 600;
   color: #f0f0f0;
 }
 
 .breakdown-pinyin {
-  font-size: 0.75rem;
+  font-size: 0.9rem;
   color: #ffaa66;
   margin-left: 8px;
 }
 
 .breakdown-translation {
-  font-size: 0.7rem;
+  font-size: 0.85rem;
   color: #88aaff;
-  margin-top: 2px;
+  margin-top: 4px;
 }
 
 .card-front.yellow, .card-back.yellow {
