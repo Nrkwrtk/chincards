@@ -192,7 +192,6 @@ body {
   position: relative;
 }
 
-/* Контент центрирован */
 .card-back-content {
   display: flex;
   flex-direction: column;
@@ -203,7 +202,6 @@ body {
   padding: 20px;
 }
 
-/* Точки прогресса — строго внизу */
 .progress-dots {
   position: absolute;
   bottom: 20px;
@@ -254,14 +252,13 @@ body {
   color: #88aaff;
   margin-top: 8px;
   width: 100%;
-  text-align: left;
-  max-height: 40%;
-  overflow-y: auto;
+  text-align: center;
 }
 
 .breakdown-item {
   margin: 6px 0;
   padding: 0;
+  text-align: center;
 }
 
 .breakdown-char {
@@ -282,7 +279,6 @@ body {
   margin-top: 2px;
 }
 
-/* Цветовые темы */
 .card-front.yellow, .card-back.yellow {
   background: linear-gradient(145deg, #3a2a1a, #4a3a1a);
   border: 2px solid #ffaa33;
