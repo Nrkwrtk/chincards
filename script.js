@@ -214,6 +214,7 @@ function initPhrasesMode() {
   if (cardEl) cardEl.classList.remove('flipped');
   updateDisplay();
   updateCardStyle();
+  updateProgressHint();
 }
 
 function getNextDateForPhrase(currentLevel) {
@@ -252,6 +253,7 @@ function loadNextCard() {
   
   updateDisplay();
   updateCardStyle();
+  updateProgressHint();
 }
 
 function getWordById(id) {
@@ -265,6 +267,35 @@ function getCurrentCard() {
   return getWordById(currentCardId);
 }
 
+// ========== ОБНОВЛЕНИЕ ПРОГРЕССА ==========
+function updateProgressHint() {
+  const hintEl = document.getElementById('progressHint');
+  if (!hintEl) return;
+  
+  const card = getCurrentCard();
+  if (!card || card.isPhrase) {
+    hintEl.innerHTML = '';
+    return;
+  }
+  
+  const progress = wordProgress.get(card.id);
+  const successCount = progress ? progress.successCount : 0;
+  
+  if (successCount >= 10) {
+    hintEl.innerHTML = '✅ Выучено!';
+  } else if (successCount > 0) {
+    hintEl.innerHTML = `📈 Прогресс: ${successCount}/10`;
+  } else {
+    hintEl.innerHTML = '👆 Знаю → +1 успех';
+  }
+  
+  // Обновляем верхний счётчик
+  const progressCountEl = document.getElementById('progressCount');
+  if (progressCountEl) {
+    progressCountEl.innerText = successCount;
+  }
+}
+
 // ========== ОБНОВЛЕНИЕ ОТОБРАЖЕНИЯ ==========
 function updateDisplay() {
   const card = getCurrentCard();
@@ -274,6 +305,7 @@ function updateDisplay() {
     document.getElementById('pinyin').innerHTML = '';
     document.getElementById('meaning').innerHTML = 'Все слова выучены!';
     document.getElementById('breakdown').innerHTML = '';
+    updateProgressHint();
     return;
   }
   
@@ -307,6 +339,7 @@ function updateDisplay() {
     document.getElementById('breakdown').innerHTML = '';
   }
   
+  updateProgressHint();
   updateCardStyle();
 }
 
@@ -577,12 +610,15 @@ function setupLanguage() {
       
       const leftLabel = document.getElementById('leftLabel');
       const learnedLabel = document.getElementById('learnedLabel');
+      const progressLabel = document.getElementById('progressLabel');
       if (currentLanguage === 'ru') {
         leftLabel.innerText = 'осталось';
         learnedLabel.innerText = 'уже знаю';
+        progressLabel.innerText = 'успехов';
       } else {
         leftLabel.innerText = 'left';
         learnedLabel.innerText = 'known';
+        progressLabel.innerText = 'progress';
       }
       
       updateDisplay();
