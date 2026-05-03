@@ -300,6 +300,35 @@ function updateProgressDots() {
   container.innerHTML = html;
 }
 
+// Разбор составного слова на отдельные иероглифы
+function getCharacterBreakdown(hanzi) {
+  if (!hanzi || hanzi.length <= 1) return null;
+  
+  const chars = hanzi.split('');
+  const breakdown = [];
+  
+  for (let char of chars) {
+    const wordEntry = fullDictionary.find(w => w.hanzi === char);
+    if (wordEntry) {
+      breakdown.push({
+        char: char,
+        pinyin: wordEntry.pinyin,
+        translation_ru: wordEntry.translations?.rus || '—',
+        translation_en: wordEntry.translations?.eng || '—'
+      });
+    } else {
+      breakdown.push({
+        char: char,
+        pinyin: '?',
+        translation_ru: '—',
+        translation_en: '—'
+      });
+    }
+  }
+  
+  return breakdown;
+}
+
 function updateDisplay() {
   const card = getCurrentCard();
   
@@ -339,7 +368,26 @@ function updateDisplay() {
   } else {
     const translation = currentLanguage === 'ru' ? card.translations.rus : card.translations.eng;
     document.getElementById('meaning').innerHTML = translation;
-    document.getElementById('breakdown').innerHTML = '';
+    
+    // Разбор составного слова
+    const breakdown = getCharacterBreakdown(card.hanzi);
+    if (breakdown && breakdown.length > 1) {
+      let breakdownHtml = '<div style="margin-top: 12px; width: 100%;">';
+      for (let part of breakdown) {
+        const wordTranslation = currentLanguage === 'ru' ? part.translation_ru : part.translation_en;
+        breakdownHtml += `
+          <div style="margin: 8px 0; padding: 6px; border-top: 1px solid rgba(136, 170, 255, 0.2);">
+            <span style="font-size: 1.1rem; font-weight: 600; color: #f0f0f0;">${part.char}</span>
+            <span style="font-size: 0.9rem; color: #ffaa66; margin-left: 8px;">${part.pinyin}</span>
+            <div style="font-size: 0.85rem; color: #88aaff; margin-top: 4px;">${wordTranslation}</div>
+          </div>
+        `;
+      }
+      breakdownHtml += '</div>';
+      document.getElementById('breakdown').innerHTML = breakdownHtml;
+    } else {
+      document.getElementById('breakdown').innerHTML = '';
+    }
   }
   
   updateProgressDots();
