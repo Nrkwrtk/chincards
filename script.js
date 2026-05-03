@@ -320,14 +320,14 @@ function updateDisplay() {
     document.getElementById('meaning').innerHTML = fullTranslation;
     
     if (card.breakdown && card.breakdown.length > 0) {
-      let breakdownHtml = '<div style="margin-top: 12px; width: 100%;">';
+      let breakdownHtml = '<div class="breakdown">';
       for (let part of card.breakdown) {
         const wordTranslation = currentLanguage === 'ru' ? part.translation_ru : part.translation_en;
         breakdownHtml += `
-          <div style="margin: 8px 0; padding: 6px; border-top: 1px solid rgba(136, 170, 255, 0.2);">
-            <span style="font-size: 1.1rem; font-weight: 600; color: #f0f0f0;">${part.char}</span>
-            <span style="font-size: 0.9rem; color: #ffaa66; margin-left: 8px;">${part.pinyin}</span>
-            <div style="font-size: 0.85rem; color: #88aaff; margin-top: 4px;">${wordTranslation}</div>
+          <div class="breakdown-item">
+            <span class="breakdown-char">${part.char}</span>
+            <span class="breakdown-pinyin">${part.pinyin}</span>
+            <div class="breakdown-translation">${wordTranslation}</div>
           </div>
         `;
       }
@@ -340,16 +340,15 @@ function updateDisplay() {
     const translation = currentLanguage === 'ru' ? card.translations.rus : card.translations.eng;
     document.getElementById('meaning').innerHTML = translation;
     
-    // Используем breakdown из базы если есть
     if (card.breakdown && card.breakdown.length > 0) {
-      let breakdownHtml = '<div style="margin-top: 12px; width: 100%;">';
+      let breakdownHtml = '<div class="breakdown">';
       for (let part of card.breakdown) {
         const wordTranslation = currentLanguage === 'ru' ? part.translation_ru : part.translation_en;
         breakdownHtml += `
-          <div style="margin: 8px 0; padding: 6px; border-top: 1px solid rgba(136, 170, 255, 0.2);">
-            <span style="font-size: 1.1rem; font-weight: 600; color: #f0f0f0;">${part.char}</span>
-            <span style="font-size: 0.9rem; color: #ffaa66; margin-left: 8px;">${part.pinyin}</span>
-            <div style="font-size: 0.85rem; color: #88aaff; margin-top: 4px;">${wordTranslation}</div>
+          <div class="breakdown-item">
+            <span class="breakdown-char">${part.char}</span>
+            <span class="breakdown-pinyin">${part.pinyin}</span>
+            <div class="breakdown-translation">${wordTranslation}</div>
           </div>
         `;
       }
