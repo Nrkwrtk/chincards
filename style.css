@@ -192,7 +192,6 @@ body {
   justify-content: center;
 }
 
-/* 10 точек прогресса */
 .progress-dots {
   display: flex;
   justify-content: center;
