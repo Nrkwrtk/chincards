@@ -1,37 +1,28 @@
-// ================================
-// ChinCards — HSK карточки
-// Версия: Professional 2.0
-// ================================
-
+// ---------- Глобальные переменные ----------
 let fullDictionary = [];
 let activeLevel = '12';
 let currentLanguage = 'ru';
-
-let wordProgress = new Map();   // successCount, dueDate
+let wordProgress = new Map();   // { successCount, dueDate }
 let learnedIds = new Set();
-
 let activeDeck = [];
 let activeDeckIndex = 0;
 let currentCardId = null;
 let isFlipped = false;
-
 let phrasesDatabase = [];
 let phraseStatus = new Map();
 let learnedPhrasesIds = new Set();
 let isPhraseOnlyMode = false;
-
 let touchStartX = 0;
 let isSwiping = false;
 const DECK_SIZE = 20;
 
-// ---------- Загрузка данных ----------
+// ---------- Загрузка ----------
 async function loadDictionary() {
   try {
     const res = await fetch('HSK14ruen.json');
     if (!res.ok) throw new Error('HSK14ruen.json not found');
     fullDictionary = await res.json();
     fullDictionary.forEach((w, i) => { if (!w.id) w.id = `w_${i}`; });
-    
     const phrasesRes = await fetch('phrases.json');
     if (phrasesRes.ok) {
       const phrasesData = await phrasesRes.json();
@@ -41,7 +32,7 @@ async function loadDictionary() {
     initLevel(activeLevel);
   } catch(e) {
     console.error(e);
-    alert('Ошибка загрузки базы. Проверьте файлы.');
+    alert('Ошибка загрузки базы.');
   }
 }
 
@@ -49,7 +40,6 @@ function loadSavedData() {
   try {
     const savedLearned = localStorage.getItem('chincards_learned');
     if (savedLearned) learnedIds = new Set(JSON.parse(savedLearned));
-    
     const savedProgress = localStorage.getItem('chincards_word_progress');
     if (savedProgress) {
       const parsed = JSON.parse(savedProgress);
@@ -60,7 +50,6 @@ function loadSavedData() {
         });
       }
     }
-    
     const savedPhraseStatus = localStorage.getItem('chincards_phrase_status');
     if (savedPhraseStatus) {
       const parsed = JSON.parse(savedPhraseStatus);
@@ -68,7 +57,6 @@ function loadSavedData() {
         phraseStatus.set(item.id, { level: item.level, returnDate: new Date(item.returnDate) });
       }
     }
-    
     const savedPhrasesLearned = localStorage.getItem('chincards_phrases_learned');
     if (savedPhrasesLearned) learnedPhrasesIds = new Set(JSON.parse(savedPhrasesLearned));
   } catch(e) { console.warn(e); }
@@ -84,7 +72,6 @@ function saveAll() {
     };
   }
   localStorage.setItem('chincards_word_progress', JSON.stringify(progressObj));
-  
   const phraseStatusArray = Array.from(phraseStatus.entries()).map(([id, data]) => ({
     id, level: data.level, returnDate: data.returnDate.toISOString()
   }));
@@ -92,7 +79,7 @@ function saveAll() {
   localStorage.setItem('chincards_phrases_learned', JSON.stringify([...learnedPhrasesIds]));
 }
 
-// ---------- Фильтрация слов по уровню ----------
+// ---------- Фильтрация ----------
 function getWordsForLevel(level) {
   if (level === '12') return fullDictionary.filter(w => w.level === 1 || w.level === 2);
   if (level === '3') return fullDictionary.filter(w => w.level === 3);
@@ -152,7 +139,7 @@ function buildInitialDeck() {
   return shuffled.slice(0, DECK_SIZE);
 }
 
-// ---------- Инициализация ----------
+// ---------- Инициализация уровней ----------
 function initLevel(level) {
   if (level === 'phrase') {
     isPhraseOnlyMode = true;
@@ -219,6 +206,7 @@ function getCurrentCard() {
   return fullDictionary.find(w => w.id === currentCardId);
 }
 
+// ---------- Отрисовка ----------
 function updateProgressDots() {
   const container = document.getElementById('progressDots');
   if (!container) return;
@@ -238,55 +226,71 @@ function updateProgressDots() {
 
 function updateDisplay() {
   const card = getCurrentCard();
-  if (!card) {
-    document.getElementById('chineseChar').innerText = '🎉';
-    document.getElementById('pinyin').innerHTML = '';
-    document.getElementById('meaning').innerHTML = 'Поздравляем! Все слова выучены.';
-    document.getElementById('breakdown').innerHTML = '';
-    updateProgressDots();
-    return;
-  }
-  document.getElementById('chineseChar').innerText = card.text || card.hanzi;
-  document.getElementById('pinyin').innerHTML = card.pinyin;
-  
-  if (card.isPhrase) {
-    const translation = currentLanguage === 'ru' ? card.translation_ru : card.translation_en;
-    document.getElementById('meaning').innerHTML = translation;
-    if (card.breakdown?.length) {
-      let html = '<div class="breakdown">';
-      for (let part of card.breakdown) {
-        const tr = currentLanguage === 'ru' ? part.translation_ru : part.translation_en;
-        html += `
-          <div class="breakdown-item">
-            <span class="breakdown-char">${part.char}</span>
-            <span class="breakdown-pinyin">${part.pinyin}</span>
-            <div class="breakdown-translation">${tr}</div>
-          </div>`;
-      }
-      html += '</div>';
-      document.getElementById('breakdown').innerHTML = html;
+  const isPhrase = card && card.isPhrase;
+  const backDiv = document.querySelector('.card-back');
+  if (isPhrase) {
+    backDiv.classList.add('phrase-mode');
+    // Для фраз используем старую центрированную верстку (вся карточка)
+    if (!card) {
+      backDiv.innerHTML = `<div class="phrase-content"><div class="pinyin"></div><div class="meaning"></div><div class="breakdown"></div></div>`;
     } else {
-      document.getElementById('breakdown').innerHTML = '';
+      const translation = currentLanguage === 'ru' ? card.translation_ru : card.translation_en;
+      let breakdownHtml = '';
+      if (card.breakdown && card.breakdown.length) {
+        breakdownHtml = '<div class="breakdown">';
+        for (let part of card.breakdown) {
+          const tr = currentLanguage === 'ru' ? part.translation_ru : part.translation_en;
+          breakdownHtml += `
+            <div class="breakdown-item">
+              <span class="breakdown-char">${part.char}</span>
+              <span class="breakdown-pinyin">${part.pinyin}</span>
+              <span class="breakdown-translation">${tr}</span>
+            </div>`;
+        }
+        breakdownHtml += '</div>';
+      }
+      backDiv.innerHTML = `
+        <div class="phrase-content">
+          <div class="pinyin">${card.pinyin}</div>
+          <div class="meaning">${translation}</div>
+          ${breakdownHtml}
+        </div>`;
     }
   } else {
-    const translation = currentLanguage === 'ru' ? card.translations.rus : card.translations.eng;
-    document.getElementById('meaning').innerHTML = translation;
-    if (card.breakdown?.length) {
-      let html = '<div class="breakdown">';
-      for (let part of card.breakdown) {
-        const tr = currentLanguage === 'ru' ? part.translation_ru : part.translation_en;
-        html += `
-          <div class="breakdown-item">
-            <span class="breakdown-char">${part.char}</span>
-            <span class="breakdown-pinyin">${part.pinyin}</span>
-            <div class="breakdown-translation">${tr}</div>
-          </div>`;
-      }
-      html += '</div>';
-      document.getElementById('breakdown').innerHTML = html;
-    } else {
+    backDiv.classList.remove('phrase-mode');
+    // Стандартная верстка с разделителем
+    if (!card) {
+      document.getElementById('pinyin').innerText = '';
+      document.getElementById('meaning').innerText = 'Все слова выучены!';
       document.getElementById('breakdown').innerHTML = '';
+    } else {
+      const translation = currentLanguage === 'ru' ? card.translations.rus : card.translations.eng;
+      document.getElementById('pinyin').innerText = card.pinyin;
+      document.getElementById('meaning').innerText = translation;
+      let breakdownHtml = '';
+      if (card.breakdown && card.breakdown.length) {
+        breakdownHtml = '<div class="breakdown">';
+        for (let part of card.breakdown) {
+          const tr = currentLanguage === 'ru' ? part.translation_ru : part.translation_en;
+          breakdownHtml += `
+            <div class="breakdown-item">
+              <span class="breakdown-char">${part.char}</span>
+              <span class="breakdown-pinyin">(${part.pinyin})</span>
+              <span class="breakdown-translation">— ${tr}</span>
+            </div>`;
+        }
+        breakdownHtml += '</div>';
+      }
+      document.getElementById('breakdown').innerHTML = breakdownHtml;
     }
+  }
+  // Обновляем лицевую сторону
+  if (card && !card.isPhrase) {
+    document.getElementById('chineseChar').innerText = card.hanzi;
+  } else if (card && card.isPhrase) {
+    document.getElementById('chineseChar').innerText = card.text;
+  } else {
+    document.getElementById('chineseChar').innerText = '🎉';
   }
   updateProgressDots();
   updateCardStyle();
@@ -391,10 +395,6 @@ function animateSwipe(dir) {
   setTimeout(() => wrap.classList.remove(`swipe-${dir}`), 300);
 }
 
-function nextCardAfterSwipe() {
-  // уже вызывается в onSwipe
-}
-
 // ---------- Озвучка ----------
 function speak(text) {
   if (!window.speechSynthesis) return;
@@ -418,7 +418,7 @@ function flipCard() {
   }
 }
 
-// ---------- Обработчики событий ----------
+// ---------- События ----------
 function setupTouch() {
   const wrap = document.querySelector('.card-wrapper');
   if (!wrap) return;
@@ -484,19 +484,13 @@ function setupLanguage() {
       btn.classList.add('active');
       const leftLabel = document.getElementById('leftLabel');
       const learnedLabel = document.getElementById('learnedLabel');
-      if (currentLanguage === 'ru') {
-        leftLabel.innerText = 'осталось';
-        learnedLabel.innerText = 'выучено';
-      } else {
-        leftLabel.innerText = 'left';
-        learnedLabel.innerText = 'learned';
-      }
+      leftLabel.innerText = currentLanguage === 'ru' ? 'осталось' : 'left';
+      learnedLabel.innerText = currentLanguage === 'ru' ? 'выучено' : 'learned';
       updateDisplay();
     });
   });
 }
 
-// ---------- Старт ----------
 document.addEventListener('DOMContentLoaded', () => {
   loadDictionary();
   setupLevels();
@@ -504,8 +498,5 @@ document.addEventListener('DOMContentLoaded', () => {
   setupTouch();
   const card = document.getElementById('flashcard');
   if (card) card.addEventListener('click', (e) => { e.stopPropagation(); flipCard(); });
-  // инициализация speech synthesis
-  if (window.speechSynthesis) {
-    window.speechSynthesis.speak(new SpeechSynthesisUtterance(''));
-  }
+  if (window.speechSynthesis) window.speechSynthesis.speak(new SpeechSynthesisUtterance(''));
 });
