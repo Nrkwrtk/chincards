@@ -177,7 +177,7 @@ body {
   justify-content: center;
   align-items: center;
   text-align: center;
-  padding: 20px;
+  padding: 24px 20px;
 }
 
 .card-front {
@@ -189,25 +189,23 @@ body {
   background: linear-gradient(145deg, #1e1e30, #282844);
   transform: rotateY(180deg);
   overflow-y: auto;
-  justify-content: center;
-  position: relative;
 }
 
-.content-wrapper {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  width: 100%;
+/* Контент на обратной стороне — строго по центру */
+.card-back > *:first-child {
+  margin-top: auto;
+}
+
+.card-back > *:last-child {
+  margin-bottom: auto;
 }
 
 .progress-dots {
   display: flex;
   justify-content: center;
   gap: 8px;
-  margin-top: auto;
-  margin-bottom: 8px;
-  padding-top: 12px;
+  margin-top: 20px;
+  margin-bottom: 4px;
 }
 
 .progress-dot {
@@ -220,6 +218,41 @@ body {
 
 .progress-dot.filled {
   background: #ff6b2c;
+}
+
+/* Без разделительных линий — убираем border-top везде */
+.breakdown {
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: #88aaff;
+  margin-top: 16px;
+  padding: 0;
+  width: 100%;
+  background: transparent;
+}
+
+/* Элементы разбора — без линий */
+.breakdown-item {
+  margin: 10px 0;
+  padding: 0;
+}
+
+.breakdown-char {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #f0f0f0;
+}
+
+.breakdown-pinyin {
+  font-size: 0.85rem;
+  color: #ffaa66;
+  margin-left: 8px;
+}
+
+.breakdown-translation {
+  font-size: 0.8rem;
+  color: #88aaff;
+  margin-top: 4px;
 }
 
 .card-front.yellow, .card-back.yellow {
@@ -258,30 +291,16 @@ body {
   font-size: 1.4rem;
   font-weight: 700;
   color: #ffaa66;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 .meaning {
   font-size: 1.1rem;
   font-weight: 400;
   color: #cccccc;
-  margin-bottom: 10px;
-  max-width: 95%;
+  margin-bottom: 8px;
+  max-width: 100%;
   word-wrap: break-word;
-  background: transparent;
-  padding: 0;
-}
-
-.breakdown {
-  font-size: 0.85rem;
-  font-weight: 400;
-  color: #88aaff;
-  margin-top: 8px;
-  padding: 6px 12px;
-  max-width: 95%;
-  background: transparent;
-  overflow-y: auto;
-  max-height: 40%;
 }
 
 .card-container.swipe-left .card {
