@@ -1,8 +1,7 @@
-// ---------- Глобальные переменные ----------
 let fullDictionary = [];
 let activeLevel = '12';
 let currentLanguage = 'ru';
-let wordProgress = new Map();   // { successCount, dueDate }
+let wordProgress = new Map();
 let learnedIds = new Set();
 let activeDeck = [];
 let activeDeckIndex = 0;
@@ -16,7 +15,6 @@ let touchStartX = 0;
 let isSwiping = false;
 const DECK_SIZE = 20;
 
-// ---------- Загрузка ----------
 async function loadDictionary() {
   try {
     const res = await fetch('HSK14ruen.json');
@@ -32,7 +30,7 @@ async function loadDictionary() {
     initLevel(activeLevel);
   } catch(e) {
     console.error(e);
-    alert('Ошибка загрузки базы.');
+    alert('Ошибка загрузки базы');
   }
 }
 
@@ -44,18 +42,13 @@ function loadSavedData() {
     if (savedProgress) {
       const parsed = JSON.parse(savedProgress);
       for (let [id, data] of Object.entries(parsed)) {
-        wordProgress.set(id, {
-          successCount: data.successCount,
-          dueDate: data.dueDate ? new Date(data.dueDate) : null
-        });
+        wordProgress.set(id, { successCount: data.successCount, dueDate: data.dueDate ? new Date(data.dueDate) : null });
       }
     }
     const savedPhraseStatus = localStorage.getItem('chincards_phrase_status');
     if (savedPhraseStatus) {
       const parsed = JSON.parse(savedPhraseStatus);
-      for (let item of parsed) {
-        phraseStatus.set(item.id, { level: item.level, returnDate: new Date(item.returnDate) });
-      }
+      for (let item of parsed) phraseStatus.set(item.id, { level: item.level, returnDate: new Date(item.returnDate) });
     }
     const savedPhrasesLearned = localStorage.getItem('chincards_phrases_learned');
     if (savedPhrasesLearned) learnedPhrasesIds = new Set(JSON.parse(savedPhrasesLearned));
@@ -66,37 +59,27 @@ function saveAll() {
   localStorage.setItem('chincards_learned', JSON.stringify([...learnedIds]));
   const progressObj = {};
   for (let [id, data] of wordProgress.entries()) {
-    progressObj[id] = {
-      successCount: data.successCount,
-      dueDate: data.dueDate ? data.dueDate.toISOString() : null
-    };
+    progressObj[id] = { successCount: data.successCount, dueDate: data.dueDate ? data.dueDate.toISOString() : null };
   }
   localStorage.setItem('chincards_word_progress', JSON.stringify(progressObj));
-  const phraseStatusArray = Array.from(phraseStatus.entries()).map(([id, data]) => ({
-    id, level: data.level, returnDate: data.returnDate.toISOString()
-  }));
+  const phraseStatusArray = Array.from(phraseStatus.entries()).map(([id, data]) => ({ id, level: data.level, returnDate: data.returnDate.toISOString() }));
   localStorage.setItem('chincards_phrase_status', JSON.stringify(phraseStatusArray));
   localStorage.setItem('chincards_phrases_learned', JSON.stringify([...learnedPhrasesIds]));
 }
 
-// ---------- Фильтрация ----------
 function getWordsForLevel(level) {
   if (level === '12') return fullDictionary.filter(w => w.level === 1 || w.level === 2);
   if (level === '3') return fullDictionary.filter(w => w.level === 3);
   return [];
 }
-
 function getDueWordsFromPool() {
   const now = new Date();
   const due = [];
   for (let [id, progress] of wordProgress.entries()) {
-    if (progress.dueDate && progress.dueDate <= now && !learnedIds.has(id) && !activeDeck.includes(id)) {
-      due.push(id);
-    }
+    if (progress.dueDate && progress.dueDate <= now && !learnedIds.has(id) && !activeDeck.includes(id)) due.push(id);
   }
   return due;
 }
-
 function getNewHSKWords() {
   const all = getWordsForLevel(activeLevel);
   const now = new Date();
@@ -108,7 +91,6 @@ function getNewHSKWords() {
     return true;
   }).map(w => w.id);
 }
-
 function replaceWordInDeck(oldId) {
   const idx = activeDeck.indexOf(oldId);
   if (idx === -1) return false;
@@ -127,7 +109,6 @@ function replaceWordInDeck(oldId) {
   activeDeck.splice(idx, 1);
   return false;
 }
-
 function buildInitialDeck() {
   const fresh = getNewHSKWords();
   if (!fresh.length) return [];
@@ -138,8 +119,6 @@ function buildInitialDeck() {
   }
   return shuffled.slice(0, DECK_SIZE);
 }
-
-// ---------- Инициализация уровней ----------
 function initLevel(level) {
   if (level === 'phrase') {
     isPhraseOnlyMode = true;
@@ -160,7 +139,6 @@ function initLevel(level) {
   updateStats();
   loadNextCard();
 }
-
 function getAvailablePhrases() {
   const now = new Date();
   return phrasesDatabase.filter(p => {
@@ -170,7 +148,6 @@ function getAvailablePhrases() {
     return true;
   });
 }
-
 function initPhrasesMode() {
   const available = getAvailablePhrases();
   currentCardId = available.length ? available[Math.floor(Math.random() * available.length)].id : null;
@@ -180,7 +157,6 @@ function initPhrasesMode() {
   updateCardStyle();
   updateProgressDots();
 }
-
 function loadNextCard() {
   if (isPhraseOnlyMode) {
     initPhrasesMode();
@@ -200,13 +176,10 @@ function loadNextCard() {
   updateCardStyle();
   updateProgressDots();
 }
-
 function getCurrentCard() {
   if (isPhraseOnlyMode) return phrasesDatabase.find(p => p.id === currentCardId);
   return fullDictionary.find(w => w.id === currentCardId);
 }
-
-// ---------- Отрисовка ----------
 function updateProgressDots() {
   const container = document.getElementById('progressDots');
   if (!container) return;
@@ -223,14 +196,12 @@ function updateProgressDots() {
   }
   container.innerHTML = html;
 }
-
 function updateDisplay() {
   const card = getCurrentCard();
   const isPhrase = card && card.isPhrase;
   const backDiv = document.querySelector('.card-back');
   if (isPhrase) {
     backDiv.classList.add('phrase-mode');
-    // Для фраз используем старую центрированную верстку (вся карточка)
     if (!card) {
       backDiv.innerHTML = `<div class="phrase-content"><div class="pinyin"></div><div class="meaning"></div><div class="breakdown"></div></div>`;
     } else {
@@ -240,25 +211,14 @@ function updateDisplay() {
         breakdownHtml = '<div class="breakdown">';
         for (let part of card.breakdown) {
           const tr = currentLanguage === 'ru' ? part.translation_ru : part.translation_en;
-          breakdownHtml += `
-            <div class="breakdown-item">
-              <span class="breakdown-char">${part.char}</span>
-              <span class="breakdown-pinyin">${part.pinyin}</span>
-              <span class="breakdown-translation">${tr}</span>
-            </div>`;
+          breakdownHtml += `<div class="breakdown-item"><span class="breakdown-char">${part.char}</span> <span class="breakdown-pinyin">${part.pinyin}</span> <span class="breakdown-translation">${tr}</span></div>`;
         }
         breakdownHtml += '</div>';
       }
-      backDiv.innerHTML = `
-        <div class="phrase-content">
-          <div class="pinyin">${card.pinyin}</div>
-          <div class="meaning">${translation}</div>
-          ${breakdownHtml}
-        </div>`;
+      backDiv.innerHTML = `<div class="phrase-content"><div class="pinyin">${card.pinyin}</div><div class="meaning">${translation}</div>${breakdownHtml}</div>`;
     }
   } else {
     backDiv.classList.remove('phrase-mode');
-    // Стандартная верстка с разделителем
     if (!card) {
       document.getElementById('pinyin').innerText = '';
       document.getElementById('meaning').innerText = 'Все слова выучены!';
@@ -272,19 +232,13 @@ function updateDisplay() {
         breakdownHtml = '<div class="breakdown">';
         for (let part of card.breakdown) {
           const tr = currentLanguage === 'ru' ? part.translation_ru : part.translation_en;
-          breakdownHtml += `
-            <div class="breakdown-item">
-              <span class="breakdown-char">${part.char}</span>
-              <span class="breakdown-pinyin">(${part.pinyin})</span>
-              <span class="breakdown-translation">— ${tr}</span>
-            </div>`;
+          breakdownHtml += `<div class="breakdown-item"><span class="breakdown-char">${part.char}</span> <span class="breakdown-pinyin">(${part.pinyin})</span> <span class="breakdown-translation">— ${tr}</span></div>`;
         }
         breakdownHtml += '</div>';
       }
       document.getElementById('breakdown').innerHTML = breakdownHtml;
     }
   }
-  // Обновляем лицевую сторону
   if (card && !card.isPhrase) {
     document.getElementById('chineseChar').innerText = card.hanzi;
   } else if (card && card.isPhrase) {
@@ -295,7 +249,6 @@ function updateDisplay() {
   updateProgressDots();
   updateCardStyle();
 }
-
 function updateCardStyle() {
   const cardEl = document.getElementById('flashcard');
   if (!cardEl) return;
@@ -319,15 +272,12 @@ function updateCardStyle() {
     }
   }
 }
-
 function updateStats() {
   const all = getWordsForLevel(activeLevel);
   const left = all.filter(w => !learnedIds.has(w.id) && !wordProgress.get(w.id)?.dueDate).length;
   document.getElementById('cardsLeft').innerText = left;
   document.getElementById('totalLearned').innerText = learnedIds.size;
 }
-
-// ---------- Свайпы ----------
 function onSwipeRight() {
   const card = getCurrentCard();
   if (!card) return;
@@ -371,7 +321,6 @@ function onSwipeRight() {
   loadNextCard();
   animateSwipe('right');
 }
-
 function onSwipeLeft() {
   const card = getCurrentCard();
   if (!card) return;
@@ -387,15 +336,12 @@ function onSwipeLeft() {
   loadNextCard();
   animateSwipe('left');
 }
-
 function animateSwipe(dir) {
   const wrap = document.querySelector('.card-wrapper');
   if (!wrap) return;
   wrap.classList.add(`swipe-${dir}`);
   setTimeout(() => wrap.classList.remove(`swipe-${dir}`), 300);
 }
-
-// ---------- Озвучка ----------
 function speak(text) {
   if (!window.speechSynthesis) return;
   const utterance = new SpeechSynthesisUtterance(text);
@@ -404,7 +350,6 @@ function speak(text) {
   window.speechSynthesis.cancel();
   window.speechSynthesis.speak(utterance);
 }
-
 function flipCard() {
   const card = getCurrentCard();
   if (!card) return;
@@ -417,8 +362,6 @@ function flipCard() {
     cardEl.classList.remove('flipped');
   }
 }
-
-// ---------- События ----------
 function setupTouch() {
   const wrap = document.querySelector('.card-wrapper');
   if (!wrap) return;
@@ -451,7 +394,6 @@ function setupTouch() {
     isSwiping = false;
   });
 }
-
 function setupLevels() {
   document.querySelectorAll('.level-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -473,7 +415,6 @@ function setupLevels() {
     });
   });
 }
-
 function setupLanguage() {
   document.querySelectorAll('.lang-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -490,7 +431,6 @@ function setupLanguage() {
     });
   });
 }
-
 document.addEventListener('DOMContentLoaded', () => {
   loadDictionary();
   setupLevels();
