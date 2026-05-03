@@ -8,10 +8,10 @@
   --pinyin-color: #ffb347;
   --meaning-color: #e0e0e0;
   --breakdown-color: #8aadff;
+  --divider-color: rgba(255,255,255,0.15);
   --progress-bg: rgba(255,255,255,0.2);
   --progress-fill: #ff7e33;
   --border-radius-card: 32px;
-  --border-radius-header: 28px;
 }
 
 * {
@@ -22,7 +22,7 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   background: linear-gradient(135deg, var(--bg-start), var(--bg-end));
   min-height: 100vh;
   display: flex;
@@ -48,12 +48,13 @@ body {
   height: 100%;
 }
 
+/* Заголовок */
 .header {
   background: rgba(10, 10, 20, 0.7);
   backdrop-filter: blur(24px);
-  border-radius: var(--border-radius-header);
+  border-radius: 28px;
   padding: 14px 18px;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
   border: 0.5px solid rgba(255,255,255,0.1);
   width: 100%;
   box-shadow: 0 8px 20px rgba(0,0,0,0.2);
@@ -74,15 +75,14 @@ body {
   font-size: 13px;
   font-weight: 500;
   color: #ccc;
-  transition: all 0.2s ease;
+  transition: all 0.2s;
   cursor: pointer;
 }
-
 .lang-btn.active {
   background: var(--accent);
   color: #000;
   font-weight: 600;
-  box-shadow: 0 2px 8px rgba(255, 159, 74, 0.3);
+  box-shadow: 0 2px 8px rgba(255,159,74,0.3);
 }
 
 .level-row {
@@ -93,19 +93,15 @@ body {
   gap: 12px;
   flex-wrap: wrap;
 }
-
 .level-label {
   font-size: 18px;
   font-weight: 700;
   color: var(--accent);
-  letter-spacing: -0.3px;
 }
-
 .level-switch {
   display: flex;
   gap: 10px;
 }
-
 .level-btn {
   background: rgba(255,255,255,0.08);
   border: none;
@@ -114,17 +110,14 @@ body {
   font-size: 14px;
   font-weight: 500;
   color: #ccc;
-  transition: all 0.2s;
   cursor: pointer;
 }
-
 .level-btn.active {
   background: linear-gradient(135deg, var(--accent), var(--accent-dark));
   color: #000;
   font-weight: 600;
-  box-shadow: 0 2px 8px rgba(255, 107, 44, 0.3);
+  box-shadow: 0 2px 8px rgba(255,107,44,0.3);
 }
-
 .level-btn.phrase-mode-btn.active {
   background: linear-gradient(135deg, #44aaff, #2288cc);
   color: white;
@@ -134,7 +127,6 @@ body {
   display: flex;
   gap: 12px;
 }
-
 .stat-card {
   flex: 1;
   background: rgba(0,0,0,0.4);
@@ -142,18 +134,14 @@ body {
   padding: 8px 10px;
   text-align: center;
 }
-
 .stat-value {
   font-size: 26px;
   font-weight: 800;
   color: var(--accent);
-  line-height: 1.2;
 }
-
 .stat-label {
   font-size: 11px;
   color: rgba(255,255,255,0.6);
-  letter-spacing: 0.3px;
 }
 
 /* Карточка */
@@ -163,10 +151,8 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  flex: 1;
-  margin: 10px 0;
+  margin: 10px 0 5px;
 }
-
 .card {
   width: 92%;
   max-width: 360px;
@@ -177,11 +163,9 @@ body {
   cursor: pointer;
   border-radius: var(--border-radius-card);
 }
-
 .card.flipped {
   transform: rotateY(180deg);
 }
-
 .card-front, .card-back {
   position: absolute;
   width: 100%;
@@ -190,135 +174,162 @@ body {
   border-radius: var(--border-radius-card);
   box-shadow: 0 25px 40px -12px rgba(0,0,0,0.5);
 }
-
 .card-front {
   background: var(--card-front);
   display: flex;
   justify-content: center;
   align-items: center;
 }
-
+.card-front .chinese-char {
+  font-size: clamp(3rem, 12vw, 5rem);
+  font-weight: 600;
+  color: white;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
 .card-back {
   background: var(--card-back);
   transform: rotateY(180deg);
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  padding: 30px 20px 24px;
+  overflow: hidden;
 }
-
-.card-back-inner {
+/* Верхняя половина */
+.card-top {
   flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  width: 100%;
+  text-align: center;
+  padding: 16px;
 }
-
-/* Типографика */
-.chinese-char {
-  font-size: clamp(3rem, 12vw, 5rem);
-  font-weight: 600;
-  color: white;
-  text-shadow: 0 2px 8px rgba(0,0,0,0.3);
-  letter-spacing: 2px;
-}
-
-.pinyin {
+.card-top .pinyin {
   font-size: 1.9rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--pinyin-color);
-  margin-bottom: 12px;
-  text-align: center;
-  letter-spacing: -0.2px;
+  margin-bottom: 10px;
 }
-
-.meaning {
+.card-top .meaning {
   font-size: 1.5rem;
-  font-weight: 500;
+  font-weight: 400;
   color: var(--meaning-color);
-  margin-bottom: 20px;
-  text-align: center;
-  line-height: 1.3;
 }
-
-.breakdown {
+/* Разделитель */
+.card-divider {
+  width: 80%;
+  height: 1px;
+  background: var(--divider-color);
+  margin: 0 auto;
+}
+/* Нижняя половина */
+.card-bottom {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.card-bottom .breakdown {
   width: 100%;
-  text-align: center;
-  margin-top: 8px;
+  text-align: left;
+  font-size: 0.95rem;
+  color: var(--breakdown-color);
 }
-
 .breakdown-item {
-  margin: 10px 0;
-  text-align: center;
+  margin: 8px 0;
+  line-height: 1.4;
 }
-
-.breakdown-item .breakdown-char {
-  font-size: 1.4rem;
+.breakdown-char {
+  font-size: 1.2rem;
   font-weight: 600;
   color: #fff;
-  display: inline-block;
-  margin-right: 6px;
 }
-
-.breakdown-item .breakdown-pinyin {
-  font-size: 1.1rem;
-  font-weight: 500;
+.breakdown-pinyin {
+  font-size: 0.9rem;
   color: var(--pinyin-color);
-  display: inline-block;
+  margin: 0 4px;
 }
-
-.breakdown-item .breakdown-translation {
-  font-size: 0.95rem;
-  font-weight: 400;
+.breakdown-translation {
+  font-size: 0.85rem;
   color: var(--breakdown-color);
-  margin-top: 4px;
-  display: block;
+  margin-left: 6px;
 }
 
-/* Прогресс точки */
+/* Точки прогресса (вне карточки, под ней) */
 .progress-dots {
   display: flex;
   justify-content: center;
   gap: 10px;
-  margin-top: 16px;
-  padding-bottom: 4px;
+  margin-top: 12px;
+  padding-bottom: 8px;
 }
-
 .progress-dot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
   background: var(--progress-bg);
-  transition: all 0.2s;
+  transition: background 0.2s;
 }
-
 .progress-dot.filled {
   background: var(--progress-fill);
-  box-shadow: 0 0 4px rgba(255, 126, 51, 0.6);
+  box-shadow: 0 0 4px rgba(255,126,51,0.6);
 }
 
-/* Цветовые темы для карточек */
+/* Стили для фразовых карточек (альтернативная верстка) */
+.card-back.phrase-mode .card-top,
+.card-back.phrase-mode .card-divider,
+.card-back.phrase-mode .card-bottom {
+  display: none;
+}
+.card-back.phrase-mode {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+.card-back.phrase-mode .phrase-content {
+  text-align: center;
+  width: 100%;
+}
+.card-back.phrase-mode .pinyin {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--pinyin-color);
+  margin-bottom: 12px;
+}
+.card-back.phrase-mode .meaning {
+  font-size: 1.4rem;
+  font-weight: 400;
+  color: var(--meaning-color);
+  margin-bottom: 20px;
+}
+.card-back.phrase-mode .breakdown {
+  text-align: left;
+  margin-top: 16px;
+}
+/* Фразы тоже могут иметь breakdown в старом формате, просто центрируем */
+.card-back.phrase-mode .breakdown-item {
+  text-align: center;
+}
+
+/* Цветовые темы */
 .card-front.yellow, .card-back.yellow {
   background: linear-gradient(145deg, #3a2a1a, #4a3a1a);
   border: 1.5px solid #ffaa33;
 }
-
 .card-front.red, .card-back.red {
   background: linear-gradient(145deg, #3a1a1a, #4a2525);
   border: 1.5px solid #ff5555;
 }
-
 .card-front.phrase-blue, .card-back.phrase-blue {
   background: linear-gradient(145deg, #1a2a3a, #1a3a4a);
 }
-
 .card-front.phrase-darkblue, .card-back.phrase-darkblue {
   background: linear-gradient(145deg, #0f2a3a, #0f3a4a);
   border: 1.5px solid #3399ff;
 }
-
 .card-front.phrase-navy, .card-back.phrase-navy {
   background: linear-gradient(145deg, #0a1a2a, #0a2a3a);
   border: 1.5px solid #1a66cc;
@@ -328,27 +339,23 @@ body {
 .card-wrapper.swipe-left .card {
   animation: swipeLeft 0.3s ease forwards;
 }
-
 .card-wrapper.swipe-right .card {
   animation: swipeRight 0.3s ease forwards;
 }
-
 @keyframes swipeLeft {
   0% { transform: translateX(0) rotate(0deg); opacity: 1; }
   100% { transform: translateX(-120%) rotate(-12deg); opacity: 0; }
 }
-
 @keyframes swipeRight {
   0% { transform: translateX(0) rotate(0deg); opacity: 1; }
   100% { transform: translateX(120%) rotate(12deg); opacity: 0; }
 }
 
-/* Responsive */
+/* Медиа для маленьких экранов */
 @media (max-width: 480px) {
-  .pinyin { font-size: 1.6rem; }
-  .meaning { font-size: 1.3rem; }
-  .breakdown-item .breakdown-char { font-size: 1.2rem; }
-  .breakdown-item .breakdown-pinyin { font-size: 1rem; }
-  .breakdown-item .breakdown-translation { font-size: 0.85rem; }
-  .stat-value { font-size: 22px; }
+  .card-top .pinyin { font-size: 1.5rem; }
+  .card-top .meaning { font-size: 1.2rem; }
+  .breakdown-char { font-size: 1rem; }
+  .breakdown-pinyin { font-size: 0.8rem; }
+  .breakdown-translation { font-size: 0.75rem; }
 }
