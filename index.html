@@ -19,7 +19,6 @@
         <button data-lang="ru" class="lang-btn active">🇷🇺 Русский</button>
         <button data-lang="en" class="lang-btn">🇬🇧 English</button>
       </div>
-      
       <div class="level-row">
         <span class="level-label">HSK</span>
         <div class="level-switch">
@@ -28,7 +27,6 @@
           <button data-level="phrase" class="level-btn phrase-mode-btn">📖 Фразы</button>
         </div>
       </div>
-      
       <div class="stats-container">
         <div class="stat-card">
           <span class="stat-value" id="cardsLeft">0</span>
@@ -47,17 +45,21 @@
           <div class="chinese-char" id="chineseChar"></div>
         </div>
         <div class="card-back">
-          <div class="card-back-inner">
+          <!-- Верхняя половина: пиньинь + перевод (центрированы по вертикали в своей половине) -->
+          <div class="card-top">
             <div class="pinyin" id="pinyin"></div>
             <div class="meaning" id="meaning"></div>
+          </div>
+          <div class="card-divider"></div>
+          <!-- Нижняя половина: breakdown (скроллится, центрирован по вертикали) -->
+          <div class="card-bottom">
             <div class="breakdown" id="breakdown"></div>
           </div>
-          <div class="progress-dots" id="progressDots"></div>
         </div>
       </div>
     </div>
+    <div class="progress-dots" id="progressDots"></div>
   </div>
-
   <script src="script.js"></script>
 </body>
 </html>
