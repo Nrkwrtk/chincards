@@ -25,7 +25,6 @@
         <div class="level-switch">
           <button data-level="12" class="level-btn active">1-2</button>
           <button data-level="3" class="level-btn">3</button>
-          <button data-level="4" class="level-btn">4</button>
           <button data-level="phrase" class="level-btn phrase-mode-btn">F</button>
         </div>
       </div>
@@ -39,10 +38,6 @@
           <span class="stat-value" id="totalLearned">0</span>
           <span class="stat-label" id="learnedLabel">уже знаю</span>
         </div>
-        <div class="stat-card">
-          <span class="stat-value" id="progressCount">0</span>
-          <span class="stat-label" id="progressLabel">успехов</span>
-        </div>
       </div>
     </div>
 
@@ -55,7 +50,9 @@
           <div class="pinyin" id="pinyin"></div>
           <div class="meaning" id="meaning"></div>
           <div class="breakdown" id="breakdown"></div>
-          <div class="progress-hint" id="progressHint"></div>
+          <div class="progress-bar-container" id="progressBarContainer">
+            <div class="progress-bar-fill" id="progressBarFill"></div>
+          </div>
         </div>
       </div>
     </div>
