@@ -48,15 +48,16 @@ body {
   height: 100%;
 }
 
-/* Заголовок */
+/* Заголовок — ширина как у карточки */
 .header {
+  width: 92%;
+  max-width: 360px;
   background: rgba(10, 10, 20, 0.7);
   backdrop-filter: blur(24px);
   border-radius: 28px;
   padding: 14px 18px;
   margin-bottom: 20px;
   border: 0.5px solid rgba(255,255,255,0.1);
-  width: 100%;
   box-shadow: 0 8px 20px rgba(0,0,0,0.2);
 }
 
@@ -144,7 +145,7 @@ body {
   color: rgba(255,255,255,0.6);
 }
 
-/* Карточка */
+/* Карточка — такая же ширина, как у header */
 .card-wrapper {
   perspective: 1200px;
   width: 100%;
@@ -221,7 +222,7 @@ body {
   background: var(--divider-color);
   margin: 0 auto;
 }
-/* Нижняя половина */
+/* Нижняя половина — центрирование содержимого */
 .card-bottom {
   flex: 1;
   overflow-y: auto;
@@ -229,65 +230,46 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
 }
 .card-bottom .breakdown {
   width: 100%;
-  text-align: left;
-  font-size: 0.95rem;
-  color: var(--breakdown-color);
+  text-align: center;
 }
 .breakdown-item {
   margin: 8px 0;
-  line-height: 1.4;
+  text-align: center;
 }
 .breakdown-char {
   font-size: 1.2rem;
   font-weight: 600;
   color: #fff;
+  display: inline-block;
 }
 .breakdown-pinyin {
   font-size: 0.9rem;
   color: var(--pinyin-color);
+  display: inline-block;
   margin: 0 4px;
 }
 .breakdown-translation {
   font-size: 0.85rem;
   color: var(--breakdown-color);
-  margin-left: 6px;
+  display: inline-block;
 }
 
-/* Точки прогресса (вне карточки, под ней) */
-.progress-dots {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 12px;
-  padding-bottom: 8px;
-}
-.progress-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--progress-bg);
-  transition: background 0.2s;
-}
-.progress-dot.filled {
-  background: var(--progress-fill);
-  box-shadow: 0 0 4px rgba(255,126,51,0.6);
-}
-
-/* Стили для фразовых карточек (альтернативная верстка) */
-.card-back.phrase-mode .card-top,
-.card-back.phrase-mode .card-divider,
-.card-back.phrase-mode .card-bottom {
-  display: none;
-}
+/* Стили для фразовых карточек (без разделителя, всё по центру) */
 .card-back.phrase-mode {
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   padding: 20px;
+}
+.card-back.phrase-mode .card-top,
+.card-back.phrase-mode .card-divider,
+.card-back.phrase-mode .card-bottom {
+  display: none;
 }
 .card-back.phrase-mode .phrase-content {
   text-align: center;
@@ -306,12 +288,30 @@ body {
   margin-bottom: 20px;
 }
 .card-back.phrase-mode .breakdown {
-  text-align: left;
-  margin-top: 16px;
+  text-align: center;
 }
-/* Фразы тоже могут иметь breakdown в старом формате, просто центрируем */
 .card-back.phrase-mode .breakdown-item {
   text-align: center;
+}
+
+/* Точки прогресса вне карточки */
+.progress-dots {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 12px;
+  padding-bottom: 8px;
+}
+.progress-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--progress-bg);
+  transition: background 0.2s;
+}
+.progress-dot.filled {
+  background: var(--progress-fill);
+  box-shadow: 0 0 4px rgba(255,126,51,0.6);
 }
 
 /* Цветовые темы */
@@ -351,7 +351,6 @@ body {
   100% { transform: translateX(120%) rotate(12deg); opacity: 0; }
 }
 
-/* Медиа для маленьких экранов */
 @media (max-width: 480px) {
   .card-top .pinyin { font-size: 1.5rem; }
   .card-top .meaning { font-size: 1.2rem; }
