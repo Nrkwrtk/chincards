@@ -256,25 +256,25 @@ body {
 }
 
 .breakdown-item {
-  margin: 8px 0;
+  margin: 10px 0;
   padding: 0;
   text-align: center;
 }
 
 .breakdown-char {
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   font-weight: 600;
   color: #f0f0f0;
 }
 
 .breakdown-pinyin {
-  font-size: 0.9rem;
+  font-size: 1rem;
   color: #ffaa66;
   margin-left: 8px;
 }
 
 .breakdown-translation {
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   color: #88aaff;
   margin-top: 4px;
 }
