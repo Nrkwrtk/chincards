@@ -2,16 +2,14 @@ let fullDictionary = [];
 let activeLevel = '12';
 let currentLanguage = 'ru';
 
-// Для каждого слова: { successCount (0-10), dueDate (null или дата возврата) }
 let wordProgress = new Map();
 let learnedIds = new Set();
 
-let activeDeck = [];        // ТОЛЬКО 20 ID слов, которые сейчас в ротации
+let activeDeck = [];
 let activeDeckIndex = 0;
 let currentCardId = null;
 let isFlipped = false;
 
-// Фразы (оставляем как есть)
 let phrasesDatabase = [];
 let phraseStatus = new Map();
 let learnedPhrasesIds = new Set();
@@ -22,7 +20,6 @@ let isSwiping = false;
 
 const DECK_SIZE = 20;
 
-// ========== ЗАГРУЗКА ==========
 async function loadDictionary() {
   try {
     const response = await fetch('HSK14ruen.json');
@@ -104,108 +101,76 @@ function getWordsForLevel(level) {
     return fullDictionary.filter(w => w.level == 1 || w.level == 2);
   } else if (level === '3') {
     return fullDictionary.filter(w => w.level == 3);
-  } else if (level === '4') {
-    return fullDictionary.filter(w => w.level == 4);
   }
   return [];
 }
 
-// ПОЛУЧИТЬ СЛОВА ИЗ ПУЛА ОЖИДАНИЯ (у которых истёк dueDate) - ВЫСШИЙ ПРИОРИТЕТ
 function getDueWordsFromPool() {
   const now = new Date();
   const dueWords = [];
   
   for (let [id, progress] of wordProgress.entries()) {
-    // Если dueDate существует и уже прошёл
     if (progress.dueDate && progress.dueDate <= now) {
-      // Не выучено навсегда
-      if (!learnedIds.has(id)) {
-        // Не в текущей колоде
-        if (!activeDeck.includes(id)) {
-          dueWords.push(id);
-        }
+      if (!learnedIds.has(id) && !activeDeck.includes(id)) {
+        dueWords.push(id);
       }
     }
   }
-  
   return dueWords;
 }
 
-// ПОЛУЧИТЬ НОВЫЕ СЛОВА ИЗ HSK (которых нет в колоде, не выучены, не на отсрочке)
 function getNewHSKWords() {
   const allWords = getWordsForLevel(activeLevel);
   const now = new Date();
   
   return allWords.filter(w => {
-    // Не выучено навсегда
     if (learnedIds.has(w.id)) return false;
-    // Не в текущей колоде
     if (activeDeck.includes(w.id)) return false;
     
     const progress = wordProgress.get(w.id);
-    // Не на активной отсрочке (dueDate в будущем)
     if (progress && progress.dueDate && progress.dueDate > now) return false;
     
     return true;
   }).map(w => w.id);
 }
 
-// ЗАМЕНИТЬ ОДНО СЛОВО В КОЛОДЕ (с приоритетом: сначала dueDate, потом новые слова)
 function replaceWordInDeck(oldWordId) {
-  console.log(`🔄 Замена: ${getWordById(oldWordId)?.hanzi}`);
-  
   const index = activeDeck.indexOf(oldWordId);
-  if (index === -1) {
-    console.log(`  → Ошибка: слово не найдено в колоде`);
-    return false;
-  }
+  if (index === -1) return false;
   
-  // 1. ПРОВЕРЯЕМ ПУЛ ОЖИДАНИЯ (ВЫСШИЙ ПРИОРИТЕТ)
   const dueWords = getDueWordsFromPool();
   
   if (dueWords.length > 0) {
     const randomIndex = Math.floor(Math.random() * dueWords.length);
     const newWordId = dueWords[randomIndex];
     activeDeck[index] = newWordId;
-    console.log(`  ✅ Приоритет 1: слово из пула ожидания → ${getWordById(newWordId)?.hanzi}`);
-    console.log(`     (dueDate истёк, возвращается в ротацию)`);
+    console.log(`  ✅ Из пула ожидания → ${getWordById(newWordId)?.hanzi}`);
     return true;
   }
   
-  // 2. ЕСЛИ ПУЛ ОЖИДАНИЯ ПУСТ → берём новое слово из HSK
   const newWords = getNewHSKWords();
   
   if (newWords.length > 0) {
     const randomIndex = Math.floor(Math.random() * newWords.length);
     const newWordId = newWords[randomIndex];
     activeDeck[index] = newWordId;
-    console.log(`  ✅ Приоритет 2: новое слово из HSK → ${getWordById(newWordId)?.hanzi}`);
+    console.log(`  ✅ Новое слово из HSK → ${getWordById(newWordId)?.hanzi}`);
     return true;
   }
   
-  // 3. НЕТ ДОСТУПНЫХ СЛОВ → удаляем текущее (колода уменьшится)
-  console.log(`  ⚠️ Нет доступных слов для замены, колода уменьшится`);
+  console.log(`  ⚠️ Нет слов для замены, колода уменьшится`);
   activeDeck.splice(index, 1);
   return false;
 }
 
-// Построить начальную колоду из 20 случайных слов (только новые, без dueDate)
 function buildInitialDeck() {
   const newWords = getNewHSKWords();
-  console.log(`📦 Доступно новых слов для начальной колоды: ${newWords.length}`);
+  console.log(`📦 Доступно новых слов: ${newWords.length}`);
   
   if (newWords.length === 0) return [];
   
   const shuffled = shuffleArray([...newWords]);
-  const deck = shuffled.slice(0, DECK_SIZE).map(id => id);
-  
-  console.log(`🃏 Начальная колода из ${deck.length} слов (только новые):`);
-  deck.forEach(id => {
-    const w = getWordById(id);
-    console.log(`  - ${w?.hanzi}`);
-  });
-  
-  return deck;
+  return shuffled.slice(0, DECK_SIZE);
 }
 
 function shuffleArray(arr) {
@@ -216,7 +181,6 @@ function shuffleArray(arr) {
   return arr;
 }
 
-// ========== ИНИЦИАЛИЗАЦИЯ ==========
 function initLevel(level) {
   console.log('\n=== ИНИЦИАЛИЗАЦИЯ ===');
   
@@ -230,17 +194,15 @@ function initLevel(level) {
   activeLevel = level;
   console.log(`Режим: УРОВЕНЬ ${level}`);
   
-  // Строим начальную колоду
   activeDeck = buildInitialDeck();
   activeDeckIndex = 0;
   
-  console.log(`\n✅ КОЛОДА ГОТОВА: ${activeDeck.length} слов (должно быть ≤ ${DECK_SIZE})`);
+  console.log(`✅ Колода: ${activeDeck.length} слов`);
   
   updateStats();
   loadNextCard();
 }
 
-// ========== ФРАЗЫ ==========
 function getAvailablePhrases() {
   const now = new Date();
   return phrasesDatabase.filter(p => {
@@ -264,7 +226,7 @@ function initPhrasesMode() {
   if (cardEl) cardEl.classList.remove('flipped');
   updateDisplay();
   updateCardStyle();
-  updateProgressHint();
+  updateProgressBar();
 }
 
 function getNextDateForPhrase(currentLevel) {
@@ -274,7 +236,6 @@ function getNextDateForPhrase(currentLevel) {
   return d;
 }
 
-// ========== ЗАГРУЗКА СЛЕДУЮЩЕЙ КАРТОЧКИ ==========
 function loadNextCard() {
   if (isPhraseOnlyMode) {
     initPhrasesMode();
@@ -283,7 +244,6 @@ function loadNextCard() {
   
   if (activeDeck.length === 0) {
     currentCardId = null;
-    console.log('❌ Колода пуста');
     updateDisplay();
     return;
   }
@@ -304,7 +264,7 @@ function loadNextCard() {
   
   updateDisplay();
   updateCardStyle();
-  updateProgressHint();
+  updateProgressBar();
 }
 
 function getWordById(id) {
@@ -318,33 +278,20 @@ function getCurrentCard() {
   return getWordById(currentCardId);
 }
 
-function updateProgressHint() {
-  const hintEl = document.getElementById('progressHint');
-  if (!hintEl) return;
+function updateProgressBar() {
+  const barFill = document.getElementById('progressBarFill');
+  if (!barFill) return;
   
   const card = getCurrentCard();
   if (!card || card.isPhrase) {
-    hintEl.innerHTML = '';
-    const progressCountEl = document.getElementById('progressCount');
-    if (progressCountEl) progressCountEl.innerText = '0';
+    barFill.style.width = '0%';
     return;
   }
   
   const progress = wordProgress.get(card.id);
   const successCount = progress ? progress.successCount : 0;
-  
-  if (successCount >= 10) {
-    hintEl.innerHTML = '✅ Выучено!';
-  } else if (successCount > 0) {
-    hintEl.innerHTML = `📈 Прогресс: ${successCount}/10`;
-  } else {
-    hintEl.innerHTML = '👆 Знаю → +1 успех';
-  }
-  
-  const progressCountEl = document.getElementById('progressCount');
-  if (progressCountEl) {
-    progressCountEl.innerText = successCount;
-  }
+  const percent = (successCount / 10) * 100;
+  barFill.style.width = `${percent}%`;
 }
 
 function updateDisplay() {
@@ -355,7 +302,7 @@ function updateDisplay() {
     document.getElementById('pinyin').innerHTML = '';
     document.getElementById('meaning').innerHTML = 'Все слова выучены!';
     document.getElementById('breakdown').innerHTML = '';
-    updateProgressHint();
+    updateProgressBar();
     return;
   }
   
@@ -389,7 +336,7 @@ function updateDisplay() {
     document.getElementById('breakdown').innerHTML = '';
   }
   
-  updateProgressHint();
+  updateProgressBar();
   updateCardStyle();
 }
 
@@ -436,8 +383,7 @@ function updateStats() {
   document.getElementById('totalLearned').innerText = learnedCount;
 }
 
-// ========== ОСНОВНАЯ ЛОГИКА СВАЙПОВ ==========
-function onSwipeRight() { // ЗНАЮ
+function onSwipeRight() {
   const card = getCurrentCard();
   if (!card) return;
   
@@ -466,7 +412,6 @@ function onSwipeRight() { // ЗНАЮ
     return;
   }
   
-  // Логика для слов
   let progress = wordProgress.get(card.id);
   if (!progress) {
     progress = { successCount: 0, dueDate: null };
@@ -475,12 +420,10 @@ function onSwipeRight() { // ЗНАЮ
   progress.successCount++;
   
   if (progress.successCount >= 10) {
-    // Полностью выучено навсегда!
     learnedIds.add(card.id);
     wordProgress.delete(card.id);
-    console.log(`  ✅ Слово ВЫУЧЕНО навсегда! +1 к счётчику`);
+    console.log(`  ✅ Слово ВЫУЧЕНО навсегда!`);
   } else {
-    // Выпадает на N дней (2,4,6... до 20)
     let days = progress.successCount * 2;
     if (days > 20) days = 20;
     const dueDate = new Date();
@@ -491,11 +434,8 @@ function onSwipeRight() { // ЗНАЮ
   }
   
   saveAll();
-  
-  // Заменяем слово в колоде (с приоритетом: сначала dueDate, потом новые)
   replaceWordInDeck(card.id);
   
-  // Корректируем индекс
   if (activeDeckIndex > 0 && activeDeckIndex <= activeDeck.length) {
     activeDeckIndex--;
   }
@@ -508,7 +448,7 @@ function onSwipeRight() { // ЗНАЮ
   animate('right');
 }
 
-function onSwipeLeft() { // НЕ ЗНАЮ
+function onSwipeLeft() {
   const card = getCurrentCard();
   if (!card) return;
   
@@ -522,19 +462,14 @@ function onSwipeLeft() { // НЕ ЗНАЮ
     return;
   }
   
-  // Сбрасываем прогресс слова (удаляем из wordProgress)
-  // Слово ОСТАЁТСЯ в колоде, но с нулевым прогрессом
   wordProgress.delete(card.id);
   console.log(`  → Прогресс сброшен, слово остаётся в ротации`);
   
   saveAll();
-  
-  // Не заменяем слово! Оно остаётся в колоде
   loadNextCard();
   animate('left');
 }
 
-// ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
 function speak(t) {
   if (!window.speechSynthesis) return;
   const u = new SpeechSynthesisUtterance(t);
@@ -635,15 +570,12 @@ function setupLanguage() {
       
       const leftLabel = document.getElementById('leftLabel');
       const learnedLabel = document.getElementById('learnedLabel');
-      const progressLabel = document.getElementById('progressLabel');
       if (currentLanguage === 'ru') {
         leftLabel.innerText = 'осталось';
         learnedLabel.innerText = 'уже знаю';
-        progressLabel.innerText = 'успехов';
       } else {
         leftLabel.innerText = 'left';
         learnedLabel.innerText = 'known';
-        progressLabel.innerText = 'progress';
       }
       
       updateDisplay();
@@ -659,7 +591,7 @@ function initSpeech() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('🚀 ПРИЛОЖЕНИЕ ЗАПУЩЕНО (финальная версия)');
+  console.log('🚀 ПРИЛОЖЕНИЕ ЗАПУЩЕНО');
   loadDictionary();
   setupLevels();
   setupLanguage();
