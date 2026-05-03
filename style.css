@@ -252,6 +252,17 @@ body {
   background: transparent;
 }
 
+.progress-hint {
+  margin-top: 16px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #ffaa66;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 6px 12px;
+  border-radius: 20px;
+  display: inline-block;
+}
+
 .card-container.swipe-left .card {
   transform: translateX(-120%) rotate(-15deg);
   opacity: 0;
