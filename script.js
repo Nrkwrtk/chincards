@@ -11,10 +11,11 @@ let phrasesDatabase = [];
 let phraseStatus = new Map();
 let learnedPhrasesIds = new Set();
 let isPhraseOnlyMode = false;
-let touchStartX = 0;
+let touchStartX = 0, touchStartY = 0;
 let isSwiping = false;
 const DECK_SIZE = 20;
 
+// ---------- Загрузка ----------
 async function loadDictionary() {
   try {
     const res = await fetch('HSK14ruen.json');
@@ -67,11 +68,13 @@ function saveAll() {
   localStorage.setItem('chincards_phrases_learned', JSON.stringify([...learnedPhrasesIds]));
 }
 
+// ---------- Фильтрация ----------
 function getWordsForLevel(level) {
   if (level === '12') return fullDictionary.filter(w => w.level === 1 || w.level === 2);
   if (level === '3') return fullDictionary.filter(w => w.level === 3);
   return [];
 }
+
 function getDueWordsFromPool() {
   const now = new Date();
   const due = [];
@@ -80,6 +83,7 @@ function getDueWordsFromPool() {
   }
   return due;
 }
+
 function getNewHSKWords() {
   const all = getWordsForLevel(activeLevel);
   const now = new Date();
@@ -91,7 +95,8 @@ function getNewHSKWords() {
     return true;
   }).map(w => w.id);
 }
-function replaceWordInDeck(oldId) {
+
+function replaceWordInDeck(oldId, keepProgress = false) {
   const idx = activeDeck.indexOf(oldId);
   if (idx === -1) return false;
   const due = getDueWordsFromPool();
@@ -109,6 +114,7 @@ function replaceWordInDeck(oldId) {
   activeDeck.splice(idx, 1);
   return false;
 }
+
 function buildInitialDeck() {
   const fresh = getNewHSKWords();
   if (!fresh.length) return [];
@@ -119,6 +125,8 @@ function buildInitialDeck() {
   }
   return shuffled.slice(0, DECK_SIZE);
 }
+
+// ---------- Инициализация ----------
 function initLevel(level) {
   if (level === 'phrase') {
     isPhraseOnlyMode = true;
@@ -139,6 +147,7 @@ function initLevel(level) {
   updateStats();
   loadNextCard();
 }
+
 function getAvailablePhrases() {
   const now = new Date();
   return phrasesDatabase.filter(p => {
@@ -148,6 +157,7 @@ function getAvailablePhrases() {
     return true;
   });
 }
+
 function initPhrasesMode() {
   const available = getAvailablePhrases();
   currentCardId = available.length ? available[Math.floor(Math.random() * available.length)].id : null;
@@ -157,6 +167,7 @@ function initPhrasesMode() {
   updateCardStyle();
   updateProgressDots();
 }
+
 function loadNextCard() {
   if (isPhraseOnlyMode) {
     initPhrasesMode();
@@ -176,10 +187,13 @@ function loadNextCard() {
   updateCardStyle();
   updateProgressDots();
 }
+
 function getCurrentCard() {
   if (isPhraseOnlyMode) return phrasesDatabase.find(p => p.id === currentCardId);
   return fullDictionary.find(w => w.id === currentCardId);
 }
+
+// ---------- Отрисовка ----------
 function updateProgressDots() {
   const container = document.getElementById('progressDots');
   if (!container) return;
@@ -196,6 +210,7 @@ function updateProgressDots() {
   }
   container.innerHTML = html;
 }
+
 function updateDisplay() {
   const card = getCurrentCard();
   const isPhrase = card && card.isPhrase;
@@ -249,6 +264,7 @@ function updateDisplay() {
   updateProgressDots();
   updateCardStyle();
 }
+
 function updateCardStyle() {
   const cardEl = document.getElementById('flashcard');
   if (!cardEl) return;
@@ -272,13 +288,16 @@ function updateCardStyle() {
     }
   }
 }
+
 function updateStats() {
   const all = getWordsForLevel(activeLevel);
   const left = all.filter(w => !learnedIds.has(w.id) && !wordProgress.get(w.id)?.dueDate).length;
   document.getElementById('cardsLeft').innerText = left;
   document.getElementById('totalLearned').innerText = learnedIds.size;
 }
-function onSwipeRight() {
+
+// ---------- Свайпы ----------
+function onSwipeRight() { // ЗНАЮ
   const card = getCurrentCard();
   if (!card) return;
   if (card.isPhrase) {
@@ -321,7 +340,8 @@ function onSwipeRight() {
   loadNextCard();
   animateSwipe('right');
 }
-function onSwipeLeft() {
+
+function onSwipeLeft() { // НЕ ЗНАЮ
   const card = getCurrentCard();
   if (!card) return;
   if (card.isPhrase) {
@@ -336,12 +356,49 @@ function onSwipeLeft() {
   loadNextCard();
   animateSwipe('left');
 }
+
+function onSwipeUp() { // ИСКЛЮЧИТЬ ИЗ РОТАЦИИ (без изменения прогресса)
+  const card = getCurrentCard();
+  if (!card) return;
+  if (card.isPhrase) {
+    // Для фраз – просто удаляем текущую и загружаем другую
+    phraseStatus.delete(card.id);
+    saveAll();
+    initLevel('phrase');
+    animateSwipe('up');
+    return;
+  }
+  // Удаляем слово из активной колоды и полностью сбрасываем его прогресс
+  const idx = activeDeck.indexOf(card.id);
+  if (idx !== -1) activeDeck.splice(idx, 1);
+  wordProgress.delete(card.id);
+  // Добавляем новое слово на замену (приоритет due, потом новые)
+  const due = getDueWordsFromPool();
+  let newWordId = null;
+  if (due.length > 0) {
+    newWordId = due[Math.floor(Math.random() * due.length)];
+  } else {
+    const fresh = getNewHSKWords();
+    if (fresh.length > 0) newWordId = fresh[Math.floor(Math.random() * fresh.length)];
+  }
+  if (newWordId) activeDeck.push(newWordId);
+  // Корректируем индекс, если нужно
+  if (activeDeckIndex > 0 && activeDeckIndex <= activeDeck.length) activeDeckIndex--;
+  if (activeDeckIndex < 0) activeDeckIndex = 0;
+  saveAll();
+  updateStats();
+  loadNextCard();
+  animateSwipe('up');
+}
+
 function animateSwipe(dir) {
   const wrap = document.querySelector('.card-wrapper');
   if (!wrap) return;
   wrap.classList.add(`swipe-${dir}`);
   setTimeout(() => wrap.classList.remove(`swipe-${dir}`), 300);
 }
+
+// ---------- Озвучка ----------
 function speak(text) {
   if (!window.speechSynthesis) return;
   const utterance = new SpeechSynthesisUtterance(text);
@@ -350,6 +407,7 @@ function speak(text) {
   window.speechSynthesis.cancel();
   window.speechSynthesis.speak(utterance);
 }
+
 function flipCard() {
   const card = getCurrentCard();
   if (!card) return;
@@ -362,38 +420,50 @@ function flipCard() {
     cardEl.classList.remove('flipped');
   }
 }
+
+// ---------- Обработка касаний (различаем горизонтальный и вертикальный свайп) ----------
 function setupTouch() {
   const wrap = document.querySelector('.card-wrapper');
   if (!wrap) return;
   wrap.addEventListener('touchstart', (e) => {
     touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
     isSwiping = true;
   }, { passive: false });
   wrap.addEventListener('touchmove', (e) => {
     if (!isSwiping) return;
-    if (Math.abs(e.touches[0].clientX - touchStartX) > 10) e.preventDefault();
+    const deltaX = Math.abs(e.touches[0].clientX - touchStartX);
+    const deltaY = Math.abs(e.touches[0].clientY - touchStartY);
+    if (deltaX > 10 || deltaY > 10) e.preventDefault();
   }, { passive: false });
   wrap.addEventListener('touchend', (e) => {
     if (!isSwiping) return;
-    const delta = e.changedTouches[0].clientX - touchStartX;
-    if (Math.abs(delta) > 50) {
-      if (delta > 0) onSwipeRight();
+    const deltaX = e.changedTouches[0].clientX - touchStartX;
+    const deltaY = e.changedTouches[0].clientY - touchStartY;
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
+      if (deltaX > 0) onSwipeRight();
       else onSwipeLeft();
+    } else if (Math.abs(deltaY) > 50 && deltaY < 0) {
+      onSwipeUp();  // свайп вверх
     }
     isSwiping = false;
   });
-  let mouseX = 0;
-  wrap.addEventListener('mousedown', (e) => { mouseX = e.clientX; isSwiping = true; });
+  let mouseX = 0, mouseY = 0;
+  wrap.addEventListener('mousedown', (e) => { mouseX = e.clientX; mouseY = e.clientY; isSwiping = true; });
   wrap.addEventListener('mouseup', (e) => {
     if (!isSwiping) return;
-    const delta = e.clientX - mouseX;
-    if (Math.abs(delta) > 50) {
-      if (delta > 0) onSwipeRight();
+    const deltaX = e.clientX - mouseX;
+    const deltaY = e.clientY - mouseY;
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
+      if (deltaX > 0) onSwipeRight();
       else onSwipeLeft();
+    } else if (Math.abs(deltaY) > 50 && deltaY < 0) {
+      onSwipeUp();
     }
     isSwiping = false;
   });
 }
+
 function setupLevels() {
   document.querySelectorAll('.level-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -415,6 +485,7 @@ function setupLevels() {
     });
   });
 }
+
 function setupLanguage() {
   document.querySelectorAll('.lang-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -431,6 +502,7 @@ function setupLanguage() {
     });
   });
 }
+
 document.addEventListener('DOMContentLoaded', () => {
   loadDictionary();
   setupLevels();
