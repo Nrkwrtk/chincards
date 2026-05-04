@@ -48,7 +48,7 @@ body {
   height: 100%;
 }
 
-/* Заголовок — ширина как у карточки */
+/* Заголовок — такой же ширины как карточка */
 .header {
   width: 92%;
   max-width: 360px;
@@ -145,7 +145,7 @@ body {
   color: rgba(255,255,255,0.6);
 }
 
-/* Карточка — такая же ширина, как у header */
+/* Карточка */
 .card-wrapper {
   perspective: 1200px;
   width: 100%;
@@ -222,7 +222,7 @@ body {
   background: var(--divider-color);
   margin: 0 auto;
 }
-/* Нижняя половина — центрирование содержимого */
+/* Нижняя половина */
 .card-bottom {
   flex: 1;
   overflow-y: auto;
@@ -258,7 +258,7 @@ body {
   display: inline-block;
 }
 
-/* Стили для фразовых карточек (без разделителя, всё по центру) */
+/* Стили для фразовых карточек */
 .card-back.phrase-mode {
   display: flex;
   flex-direction: column;
@@ -342,6 +342,10 @@ body {
 .card-wrapper.swipe-right .card {
   animation: swipeRight 0.3s ease forwards;
 }
+.card-wrapper.swipe-up .card {
+  animation: swipeUp 0.3s ease forwards;
+}
+
 @keyframes swipeLeft {
   0% { transform: translateX(0) rotate(0deg); opacity: 1; }
   100% { transform: translateX(-120%) rotate(-12deg); opacity: 0; }
@@ -349,6 +353,10 @@ body {
 @keyframes swipeRight {
   0% { transform: translateX(0) rotate(0deg); opacity: 1; }
   100% { transform: translateX(120%) rotate(12deg); opacity: 0; }
+}
+@keyframes swipeUp {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(-120%) rotate(-5deg); opacity: 0; }
 }
 
 @media (max-width: 480px) {
