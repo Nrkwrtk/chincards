@@ -436,4 +436,88 @@ function setupTouch() {
     if (!isSwiping) return;
     const deltaX = e.changedTouches[0].clientX - touchStartX;
     const deltaY = e.changedTouches[0].clientY - touchStartY;
-    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
+      if (deltaX > 0) onSwipeRight();
+      else onSwipeLeft();
+    } else if (Math.abs(deltaY) > 50 && deltaY < 0) {
+      onSwipeUp();
+    }
+    isSwiping = false;
+  });
+  let mouseX = 0, mouseY = 0;
+  wrap.addEventListener('mousedown', (e) => { mouseX = e.clientX; mouseY = e.clientY; isSwiping = true; });
+  wrap.addEventListener('mouseup', (e) => {
+    if (!isSwiping) return;
+    const deltaX = e.clientX - mouseX;
+    const deltaY = e.clientY - mouseY;
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
+      if (deltaX > 0) onSwipeRight();
+      else onSwipeLeft();
+    } else if (Math.abs(deltaY) > 50 && deltaY < 0) {
+      onSwipeUp();
+    }
+    isSwiping = false;
+  });
+}
+
+function setupLevels() {
+  document.querySelectorAll('.level-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const val = btn.dataset.level;
+      if (val === 'phrase') {
+        if (isPhraseOnlyMode) return;
+        isPhraseOnlyMode = true;
+        document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        initLevel('phrase');
+      } else {
+        if (!isPhraseOnlyMode && val === activeLevel) return;
+        isPhraseOnlyMode = false;
+        activeLevel = val;
+        document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        initLevel(activeLevel);
+      }
+    });
+  });
+}
+
+function setupLanguage() {
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const lang = btn.dataset.lang;
+      if (lang === currentLanguage) return;
+      currentLanguage = lang;
+      document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const leftLabel = document.getElementById('leftLabel');
+      const learnedLabel = document.getElementById('learnedLabel');
+      leftLabel.innerText = currentLanguage === 'ru' ? 'осталось' : 'left';
+      learnedLabel.innerText = currentLanguage === 'ru' ? 'выучено' : 'learned';
+      
+      const hintLeft = document.getElementById('hintLeft');
+      const hintRight = document.getElementById('hintRight');
+      const hintUp = document.getElementById('hintUp');
+      if (currentLanguage === 'ru') {
+        hintLeft.innerText = 'Не знаю';
+        hintRight.innerText = 'Знаю';
+        hintUp.innerText = 'Заменить';
+      } else {
+        hintLeft.innerText = "Don't know";
+        hintRight.innerText = 'Know';
+        hintUp.innerText = 'Replace';
+      }
+      updateDisplay();
+    });
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadDictionary();
+  setupLevels();
+  setupLanguage();
+  setupTouch();
+  const card = document.getElementById('flashcard');
+  if (card) card.addEventListener('click', (e) => { e.stopPropagation(); flipCard(); });
+  if (window.speechSynthesis) window.speechSynthesis.speak(new SpeechSynthesisUtterance(''));
+});
