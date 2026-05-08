@@ -124,147 +124,72 @@ function buildInitialDeck() {
   return shuffled.slice(0, DECK_SIZE);
 }
 
-function initLevel(level) {
-  if (level === 'phrase') {
-    isPhraseOnlyMode = true;
-    initPhrasesMode();
-    return;
-  }
-  isPhraseOnlyMode = false;
-  activeLevel = level;
-  const now = new Date();
-  for (let [id, prog] of wordProgress.entries()) {
-    if (prog.dueDate && prog.dueDate <= now) {
-      prog.dueDate = null;
-      wordProgress.set(id, prog);
+function renderHSKCard(card) {
+  const translation = currentLanguage === 'ru' ? card.translations.rus : card.translations.eng;
+  let breakdownHtml = '';
+  if (card.breakdown && card.breakdown.length) {
+    breakdownHtml = '<div class="breakdown">';
+    for (let part of card.breakdown) {
+      const tr = currentLanguage === 'ru' ? part.translation_ru : part.translation_en;
+      breakdownHtml += `<div class="breakdown-item"><span class="breakdown-char">${part.char}</span> <span class="breakdown-pinyin">(${part.pinyin})</span> <span class="breakdown-translation">— ${tr}</span></div>`;
     }
+    breakdownHtml += '</div>';
   }
-  activeDeck = buildInitialDeck();
-  activeDeckIndex = 0;
-  updateStats();
-  loadNextCard();
-}
-
-function getAvailablePhrases() {
-  const now = new Date();
-  return phrasesDatabase.filter(p => {
-    if (learnedPhrasesIds.has(p.id)) return false;
-    const st = phraseStatus.get(p.id);
-    if (st && st.returnDate > now) return false;
-    return true;
-  });
-}
-
-function initPhrasesMode() {
-  const available = getAvailablePhrases();
-  currentCardId = available.length ? available[Math.floor(Math.random() * available.length)].id : null;
-  isFlipped = false;
-  document.getElementById('flashcard').classList.remove('flipped');
-  updateDisplay();
-  updateCardStyle();
-  updateProgressDots();
-}
-
-function loadNextCard() {
-  if (isPhraseOnlyMode) {
-    initPhrasesMode();
-    return;
-  }
-  if (!activeDeck.length) {
-    currentCardId = null;
-    updateDisplay();
-    return;
-  }
-  if (activeDeckIndex >= activeDeck.length) activeDeckIndex = 0;
-  currentCardId = activeDeck[activeDeckIndex];
-  activeDeckIndex++;
-  isFlipped = false;
-  document.getElementById('flashcard').classList.remove('flipped');
-  updateDisplay();
-  updateCardStyle();
-  updateProgressDots();
-}
-
-function getCurrentCard() {
-  if (isPhraseOnlyMode) return phrasesDatabase.find(p => p.id === currentCardId);
-  return fullDictionary.find(w => w.id === currentCardId);
-}
-
-function updateProgressDots() {
-  const container = document.getElementById('progressDots');
-  if (!container) return;
-  const card = getCurrentCard();
-  if (!card || card.isPhrase) {
-    container.innerHTML = '';
-    return;
-  }
-  const prog = wordProgress.get(card.id);
-  const count = prog ? prog.successCount : 0;
-  let html = '';
+  const progress = wordProgress.get(card.id);
+  const count = progress ? progress.successCount : 0;
+  let dotsHtml = '';
   for (let i = 0; i < 10; i++) {
-    html += `<div class="progress-dot ${i < count ? 'filled' : ''}"></div>`;
+    dotsHtml += `<div class="progress-dot ${i < count ? 'filled' : ''}"></div>`;
   }
-  container.innerHTML = html;
+  return `
+    <div class="card-top">
+      <div class="pinyin">${card.pinyin}</div>
+      <div class="meaning">${translation}</div>
+    </div>
+    <div class="progress-dots">${dotsHtml}</div>
+    <div class="card-bottom">
+      ${breakdownHtml}
+    </div>
+  `;
+}
+
+function renderPhraseCard(card) {
+  const translation = currentLanguage === 'ru' ? card.translation_ru : card.translation_en;
+  let breakdownHtml = '';
+  if (card.breakdown && card.breakdown.length) {
+    breakdownHtml = '<div class="breakdown">';
+    for (let part of card.breakdown) {
+      const tr = currentLanguage === 'ru' ? part.translation_ru : part.translation_en;
+      breakdownHtml += `<div class="breakdown-item"><span class="breakdown-char">${part.char}</span> <span class="breakdown-pinyin">${part.pinyin}</span> <span class="breakdown-translation">${tr}</span></div>`;
+    }
+    breakdownHtml += '</div>';
+  }
+  return `
+    <div class="phrase-content">
+      <div class="pinyin">${card.pinyin}</div>
+      <div class="meaning">${translation}</div>
+      ${breakdownHtml}
+    </div>
+  `;
 }
 
 function updateDisplay() {
   const card = getCurrentCard();
-  const isPhrase = card && card.isPhrase;
-  const backDiv = document.querySelector('.card-back');
-  
-  if (isPhrase) {
+  const backDiv = document.getElementById('cardBack');
+  if (!card) {
+    document.getElementById('chineseChar').innerHTML = '🎉';
+    backDiv.innerHTML = '<div class="card-top"><div class="pinyin"></div><div class="meaning">Все слова выучены!</div></div>';
+    backDiv.classList.remove('phrase-mode');
+    return;
+  }
+  document.getElementById('chineseChar').innerHTML = card.text || card.hanzi;
+  if (card.isPhrase) {
     backDiv.classList.add('phrase-mode');
-    if (!card) {
-      backDiv.innerHTML = `<div class="phrase-content"><div class="pinyin"></div><div class="meaning"></div><div class="breakdown"></div></div>`;
-    } else {
-      const translation = currentLanguage === 'ru' ? card.translation_ru : card.translation_en;
-      let breakdownHtml = '';
-      if (card.breakdown && card.breakdown.length) {
-        breakdownHtml = '<div class="breakdown">';
-        for (let part of card.breakdown) {
-          const tr = currentLanguage === 'ru' ? part.translation_ru : part.translation_en;
-          breakdownHtml += `<div class="breakdown-item"><span class="breakdown-char">${part.char}</span> <span class="breakdown-pinyin">${part.pinyin}</span> <span class="breakdown-translation">${tr}</span></div>`;
-        }
-        breakdownHtml += '</div>';
-      }
-      backDiv.innerHTML = `<div class="phrase-content"><div class="pinyin">${card.pinyin}</div><div class="meaning">${translation}</div>${breakdownHtml}</div>`;
-    }
-    const progressContainer = document.getElementById('progressDots');
-    if (progressContainer) progressContainer.style.display = 'none';
+    backDiv.innerHTML = renderPhraseCard(card);
   } else {
     backDiv.classList.remove('phrase-mode');
-    const progressContainer = document.getElementById('progressDots');
-    if (progressContainer) progressContainer.style.display = 'flex';
-    
-    if (!card) {
-      document.getElementById('pinyin').innerHTML = '';
-      document.getElementById('meaning').innerHTML = 'Все слова выучены!';
-      document.getElementById('breakdown').innerHTML = '';
-    } else {
-      const translation = currentLanguage === 'ru' ? card.translations.rus : card.translations.eng;
-      document.getElementById('pinyin').innerHTML = card.pinyin;
-      document.getElementById('meaning').innerHTML = translation;
-      let breakdownHtml = '';
-      if (card.breakdown && card.breakdown.length) {
-        breakdownHtml = '<div class="breakdown">';
-        for (let part of card.breakdown) {
-          const tr = currentLanguage === 'ru' ? part.translation_ru : part.translation_en;
-          breakdownHtml += `<div class="breakdown-item"><span class="breakdown-char">${part.char}</span> <span class="breakdown-pinyin">(${part.pinyin})</span> <span class="breakdown-translation">— ${tr}</span></div>`;
-        }
-        breakdownHtml += '</div>';
-      }
-      document.getElementById('breakdown').innerHTML = breakdownHtml;
-    }
+    backDiv.innerHTML = renderHSKCard(card);
   }
-  
-  if (card && !card.isPhrase) {
-    document.getElementById('chineseChar').innerHTML = card.hanzi;
-  } else if (card && card.isPhrase) {
-    document.getElementById('chineseChar').innerHTML = card.text;
-  } else {
-    document.getElementById('chineseChar').innerHTML = '🎉';
-  }
-  updateProgressDots();
   updateCardStyle();
 }
 
@@ -297,6 +222,72 @@ function updateStats() {
   const left = all.filter(w => !learnedIds.has(w.id) && !wordProgress.get(w.id)?.dueDate).length;
   document.getElementById('cardsLeft').innerText = left;
   document.getElementById('totalLearned').innerText = learnedIds.size;
+}
+
+function initLevel(level) {
+  if (level === 'phrase') {
+    isPhraseOnlyMode = true;
+    const available = getAvailablePhrases();
+    currentCardId = available.length ? available[Math.floor(Math.random() * available.length)].id : null;
+    isFlipped = false;
+    document.getElementById('flashcard').classList.remove('flipped');
+    updateDisplay();
+    updateCardStyle();
+    updateStats();
+    return;
+  }
+  isPhraseOnlyMode = false;
+  activeLevel = level;
+  const now = new Date();
+  for (let [id, prog] of wordProgress.entries()) {
+    if (prog.dueDate && prog.dueDate <= now) {
+      prog.dueDate = null;
+      wordProgress.set(id, prog);
+    }
+  }
+  activeDeck = buildInitialDeck();
+  activeDeckIndex = 0;
+  updateStats();
+  loadNextCard();
+}
+
+function getAvailablePhrases() {
+  const now = new Date();
+  return phrasesDatabase.filter(p => {
+    if (learnedPhrasesIds.has(p.id)) return false;
+    const st = phraseStatus.get(p.id);
+    if (st && st.returnDate > now) return false;
+    return true;
+  });
+}
+
+function loadNextCard() {
+  if (isPhraseOnlyMode) {
+    const available = getAvailablePhrases();
+    currentCardId = available.length ? available[Math.floor(Math.random() * available.length)].id : null;
+    isFlipped = false;
+    document.getElementById('flashcard').classList.remove('flipped');
+    updateDisplay();
+    updateCardStyle();
+    return;
+  }
+  if (!activeDeck.length) {
+    currentCardId = null;
+    updateDisplay();
+    return;
+  }
+  if (activeDeckIndex >= activeDeck.length) activeDeckIndex = 0;
+  currentCardId = activeDeck[activeDeckIndex];
+  activeDeckIndex++;
+  isFlipped = false;
+  document.getElementById('flashcard').classList.remove('flipped');
+  updateDisplay();
+  updateCardStyle();
+}
+
+function getCurrentCard() {
+  if (isPhraseOnlyMode) return phrasesDatabase.find(p => p.id === currentCardId);
+  return fullDictionary.find(w => w.id === currentCardId);
 }
 
 function onSwipeRight() {
@@ -494,7 +485,6 @@ function setupLanguage() {
       const learnedLabel = document.getElementById('learnedLabel');
       leftLabel.innerText = currentLanguage === 'ru' ? 'осталось' : 'left';
       learnedLabel.innerText = currentLanguage === 'ru' ? 'выучено' : 'learned';
-      
       const hintLeft = document.getElementById('hintLeft');
       const hintRight = document.getElementById('hintRight');
       const hintUp = document.getElementById('hintUp');
