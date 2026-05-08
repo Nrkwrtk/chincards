@@ -49,14 +49,30 @@
             <div class="pinyin" id="pinyin"></div>
             <div class="meaning" id="meaning"></div>
           </div>
-          <div class="card-divider"></div>
+          <!-- Прогресс-бар теперь тут, между верхом и низом -->
+          <div class="progress-dots" id="progressDots"></div>
           <div class="card-bottom">
             <div class="breakdown" id="breakdown"></div>
           </div>
         </div>
       </div>
     </div>
-    <div class="progress-dots" id="progressDots"></div>
+    
+    <!-- Подсказки жестов -->
+    <div class="gesture-hints">
+      <div class="gesture-hint">
+        <span class="gesture-arrow">←</span>
+        <span class="gesture-label" id="hintLeft">Не знаю</span>
+      </div>
+      <div class="gesture-hint">
+        <span class="gesture-arrow">→</span>
+        <span class="gesture-label" id="hintRight">Знаю</span>
+      </div>
+      <div class="gesture-hint">
+        <span class="gesture-arrow">↑</span>
+        <span class="gesture-label" id="hintUp">Заменить</span>
+      </div>
+    </div>
   </div>
   <script src="script.js"></script>
 </body>
