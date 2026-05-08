@@ -15,7 +15,6 @@ let touchStartX = 0, touchStartY = 0;
 let isSwiping = false;
 const DECK_SIZE = 20;
 
-// ---------- Загрузка ----------
 async function loadDictionary() {
   try {
     const res = await fetch('HSK14ruen.json');
@@ -68,7 +67,6 @@ function saveAll() {
   localStorage.setItem('chincards_phrases_learned', JSON.stringify([...learnedPhrasesIds]));
 }
 
-// ---------- Фильтрация ----------
 function getWordsForLevel(level) {
   if (level === '12') return fullDictionary.filter(w => w.level === 1 || w.level === 2);
   if (level === '3') return fullDictionary.filter(w => w.level === 3);
@@ -96,7 +94,7 @@ function getNewHSKWords() {
   }).map(w => w.id);
 }
 
-function replaceWordInDeck(oldId, keepProgress = false) {
+function replaceWordInDeck(oldId) {
   const idx = activeDeck.indexOf(oldId);
   if (idx === -1) return false;
   const due = getDueWordsFromPool();
@@ -126,7 +124,6 @@ function buildInitialDeck() {
   return shuffled.slice(0, DECK_SIZE);
 }
 
-// ---------- Инициализация ----------
 function initLevel(level) {
   if (level === 'phrase') {
     isPhraseOnlyMode = true;
@@ -193,7 +190,6 @@ function getCurrentCard() {
   return fullDictionary.find(w => w.id === currentCardId);
 }
 
-// ---------- Отрисовка ----------
 function updateProgressDots() {
   const container = document.getElementById('progressDots');
   if (!container) return;
@@ -215,6 +211,7 @@ function updateDisplay() {
   const card = getCurrentCard();
   const isPhrase = card && card.isPhrase;
   const backDiv = document.querySelector('.card-back');
+  
   if (isPhrase) {
     backDiv.classList.add('phrase-mode');
     if (!card) {
@@ -232,16 +229,21 @@ function updateDisplay() {
       }
       backDiv.innerHTML = `<div class="phrase-content"><div class="pinyin">${card.pinyin}</div><div class="meaning">${translation}</div>${breakdownHtml}</div>`;
     }
+    const progressContainer = document.getElementById('progressDots');
+    if (progressContainer) progressContainer.style.display = 'none';
   } else {
     backDiv.classList.remove('phrase-mode');
+    const progressContainer = document.getElementById('progressDots');
+    if (progressContainer) progressContainer.style.display = 'flex';
+    
     if (!card) {
-      document.getElementById('pinyin').innerText = '';
-      document.getElementById('meaning').innerText = 'Все слова выучены!';
+      document.getElementById('pinyin').innerHTML = '';
+      document.getElementById('meaning').innerHTML = 'Все слова выучены!';
       document.getElementById('breakdown').innerHTML = '';
     } else {
       const translation = currentLanguage === 'ru' ? card.translations.rus : card.translations.eng;
-      document.getElementById('pinyin').innerText = card.pinyin;
-      document.getElementById('meaning').innerText = translation;
+      document.getElementById('pinyin').innerHTML = card.pinyin;
+      document.getElementById('meaning').innerHTML = translation;
       let breakdownHtml = '';
       if (card.breakdown && card.breakdown.length) {
         breakdownHtml = '<div class="breakdown">';
@@ -254,12 +256,13 @@ function updateDisplay() {
       document.getElementById('breakdown').innerHTML = breakdownHtml;
     }
   }
+  
   if (card && !card.isPhrase) {
-    document.getElementById('chineseChar').innerText = card.hanzi;
+    document.getElementById('chineseChar').innerHTML = card.hanzi;
   } else if (card && card.isPhrase) {
-    document.getElementById('chineseChar').innerText = card.text;
+    document.getElementById('chineseChar').innerHTML = card.text;
   } else {
-    document.getElementById('chineseChar').innerText = '🎉';
+    document.getElementById('chineseChar').innerHTML = '🎉';
   }
   updateProgressDots();
   updateCardStyle();
@@ -296,8 +299,7 @@ function updateStats() {
   document.getElementById('totalLearned').innerText = learnedIds.size;
 }
 
-// ---------- Свайпы ----------
-function onSwipeRight() { // ЗНАЮ
+function onSwipeRight() {
   const card = getCurrentCard();
   if (!card) return;
   if (card.isPhrase) {
@@ -341,7 +343,7 @@ function onSwipeRight() { // ЗНАЮ
   animateSwipe('right');
 }
 
-function onSwipeLeft() { // НЕ ЗНАЮ
+function onSwipeLeft() {
   const card = getCurrentCard();
   if (!card) return;
   if (card.isPhrase) {
@@ -357,22 +359,19 @@ function onSwipeLeft() { // НЕ ЗНАЮ
   animateSwipe('left');
 }
 
-function onSwipeUp() { // ИСКЛЮЧИТЬ ИЗ РОТАЦИИ (без изменения прогресса)
+function onSwipeUp() {
   const card = getCurrentCard();
   if (!card) return;
   if (card.isPhrase) {
-    // Для фраз – просто удаляем текущую и загружаем другую
     phraseStatus.delete(card.id);
     saveAll();
     initLevel('phrase');
     animateSwipe('up');
     return;
   }
-  // Удаляем слово из активной колоды и полностью сбрасываем его прогресс
   const idx = activeDeck.indexOf(card.id);
   if (idx !== -1) activeDeck.splice(idx, 1);
   wordProgress.delete(card.id);
-  // Добавляем новое слово на замену (приоритет due, потом новые)
   const due = getDueWordsFromPool();
   let newWordId = null;
   if (due.length > 0) {
@@ -382,7 +381,6 @@ function onSwipeUp() { // ИСКЛЮЧИТЬ ИЗ РОТАЦИИ (без изм�
     if (fresh.length > 0) newWordId = fresh[Math.floor(Math.random() * fresh.length)];
   }
   if (newWordId) activeDeck.push(newWordId);
-  // Корректируем индекс, если нужно
   if (activeDeckIndex > 0 && activeDeckIndex <= activeDeck.length) activeDeckIndex--;
   if (activeDeckIndex < 0) activeDeckIndex = 0;
   saveAll();
@@ -398,7 +396,6 @@ function animateSwipe(dir) {
   setTimeout(() => wrap.classList.remove(`swipe-${dir}`), 300);
 }
 
-// ---------- Озвучка ----------
 function speak(text) {
   if (!window.speechSynthesis) return;
   const utterance = new SpeechSynthesisUtterance(text);
@@ -421,7 +418,6 @@ function flipCard() {
   }
 }
 
-// ---------- Обработка касаний (различаем горизонтальный и вертикальный свайп) ----------
 function setupTouch() {
   const wrap = document.querySelector('.card-wrapper');
   if (!wrap) return;
@@ -440,75 +436,4 @@ function setupTouch() {
     if (!isSwiping) return;
     const deltaX = e.changedTouches[0].clientX - touchStartX;
     const deltaY = e.changedTouches[0].clientY - touchStartY;
-    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
-      if (deltaX > 0) onSwipeRight();
-      else onSwipeLeft();
-    } else if (Math.abs(deltaY) > 50 && deltaY < 0) {
-      onSwipeUp();  // свайп вверх
-    }
-    isSwiping = false;
-  });
-  let mouseX = 0, mouseY = 0;
-  wrap.addEventListener('mousedown', (e) => { mouseX = e.clientX; mouseY = e.clientY; isSwiping = true; });
-  wrap.addEventListener('mouseup', (e) => {
-    if (!isSwiping) return;
-    const deltaX = e.clientX - mouseX;
-    const deltaY = e.clientY - mouseY;
-    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
-      if (deltaX > 0) onSwipeRight();
-      else onSwipeLeft();
-    } else if (Math.abs(deltaY) > 50 && deltaY < 0) {
-      onSwipeUp();
-    }
-    isSwiping = false;
-  });
-}
-
-function setupLevels() {
-  document.querySelectorAll('.level-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const val = btn.dataset.level;
-      if (val === 'phrase') {
-        if (isPhraseOnlyMode) return;
-        isPhraseOnlyMode = true;
-        document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        initLevel('phrase');
-      } else {
-        if (!isPhraseOnlyMode && val === activeLevel) return;
-        isPhraseOnlyMode = false;
-        activeLevel = val;
-        document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        initLevel(activeLevel);
-      }
-    });
-  });
-}
-
-function setupLanguage() {
-  document.querySelectorAll('.lang-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const lang = btn.dataset.lang;
-      if (lang === currentLanguage) return;
-      currentLanguage = lang;
-      document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      const leftLabel = document.getElementById('leftLabel');
-      const learnedLabel = document.getElementById('learnedLabel');
-      leftLabel.innerText = currentLanguage === 'ru' ? 'осталось' : 'left';
-      learnedLabel.innerText = currentLanguage === 'ru' ? 'выучено' : 'learned';
-      updateDisplay();
-    });
-  });
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  loadDictionary();
-  setupLevels();
-  setupLanguage();
-  setupTouch();
-  const card = document.getElementById('flashcard');
-  if (card) card.addEventListener('click', (e) => { e.stopPropagation(); flipCard(); });
-  if (window.speechSynthesis) window.speechSynthesis.speak(new SpeechSynthesisUtterance(''));
-});
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 
