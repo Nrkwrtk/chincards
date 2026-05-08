@@ -8,8 +8,7 @@
   --pinyin-color: #ffb347;
   --meaning-color: #e0e0e0;
   --breakdown-color: #8aadff;
-  --divider-color: rgba(255,255,255,0.15);
-  --progress-bg: rgba(255,255,255,0.2);
+  --progress-bg: rgba(255,255,255,0.15);
   --progress-fill: #ff7e33;
   --border-radius-card: 32px;
 }
@@ -48,7 +47,7 @@ body {
   height: 100%;
 }
 
-/* Заголовок — такой же ширины как карточка */
+/* Заголовок */
 .header {
   width: 92%;
   max-width: 360px;
@@ -215,12 +214,26 @@ body {
   font-weight: 400;
   color: var(--meaning-color);
 }
-/* Разделитель */
-.card-divider {
-  width: 80%;
-  height: 1px;
-  background: var(--divider-color);
-  margin: 0 auto;
+/* Прогресс-бар = разделитель */
+.progress-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: transparent;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.progress-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--progress-bg);
+  transition: all 0.2s;
+}
+.progress-dot.filled {
+  background: var(--progress-fill);
+  box-shadow: 0 0 4px rgba(255,126,51,0.6);
 }
 /* Нижняя половина */
 .card-bottom {
@@ -259,17 +272,17 @@ body {
 }
 
 /* Стили для фразовых карточек */
+.card-back.phrase-mode .card-top,
+.card-back.phrase-mode .progress-dots,
+.card-back.phrase-mode .card-bottom {
+  display: none;
+}
 .card-back.phrase-mode {
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   padding: 20px;
-}
-.card-back.phrase-mode .card-top,
-.card-back.phrase-mode .card-divider,
-.card-back.phrase-mode .card-bottom {
-  display: none;
 }
 .card-back.phrase-mode .phrase-content {
   text-align: center;
@@ -294,24 +307,31 @@ body {
   text-align: center;
 }
 
-/* Точки прогресса вне карточки */
-.progress-dots {
+/* Подсказки жестов */
+.gesture-hints {
   display: flex;
   justify-content: center;
-  gap: 10px;
-  margin-top: 12px;
-  padding-bottom: 8px;
+  gap: 32px;
+  margin-top: 16px;
+  padding: 8px 16px;
+  background: rgba(0,0,0,0.3);
+  border-radius: 40px;
+  backdrop-filter: blur(8px);
 }
-.progress-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--progress-bg);
-  transition: background 0.2s;
+.gesture-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
-.progress-dot.filled {
-  background: var(--progress-fill);
-  box-shadow: 0 0 4px rgba(255,126,51,0.6);
+.gesture-arrow {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+.gesture-label {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.7);
+  letter-spacing: 0.3px;
 }
 
 /* Цветовые темы */
@@ -365,4 +385,7 @@ body {
   .breakdown-char { font-size: 1rem; }
   .breakdown-pinyin { font-size: 0.8rem; }
   .breakdown-translation { font-size: 0.75rem; }
+  .gesture-hints { gap: 20px; }
+  .gesture-arrow { font-size: 1rem; }
+  .gesture-label { font-size: 0.65rem; }
 }
