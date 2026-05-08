@@ -8,7 +8,7 @@
   --pinyin-color: #ffb347;
   --meaning-color: #e0e0e0;
   --breakdown-color: #8aadff;
-  --progress-bg: rgba(255,255,255,0.15);
+  --progress-bg: rgba(255,255,255,0.2);
   --progress-fill: #ff7e33;
   --border-radius-card: 32px;
 }
@@ -47,7 +47,6 @@ body {
   height: 100%;
 }
 
-/* Заголовок */
 .header {
   width: 92%;
   max-width: 360px;
@@ -144,7 +143,6 @@ body {
   color: rgba(255,255,255,0.6);
 }
 
-/* Карточка */
 .card-wrapper {
   perspective: 1200px;
   width: 100%;
@@ -191,9 +189,10 @@ body {
   transform: rotateY(180deg);
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-y: auto;
 }
-/* Верхняя половина */
+
+/* Верхняя часть: пиньинь + перевод */
 .card-top {
   flex: 1;
   display: flex;
@@ -201,7 +200,7 @@ body {
   justify-content: center;
   align-items: center;
   text-align: center;
-  padding: 16px;
+  padding: 20px 16px;
 }
 .card-top .pinyin {
   font-size: 1.9rem;
@@ -214,15 +213,14 @@ body {
   font-weight: 400;
   color: var(--meaning-color);
 }
-/* Прогресс-бар = разделитель */
+
+/* Прогресс-бар = разделитель (без лишних линий) */
 .progress-dots {
   display: flex;
   justify-content: center;
   gap: 8px;
-  padding: 12px 20px;
+  padding: 12px 16px;
   background: transparent;
-  border-top: 1px solid rgba(255,255,255,0.1);
-  border-bottom: 1px solid rgba(255,255,255,0.1);
 }
 .progress-dot {
   width: 8px;
@@ -235,7 +233,8 @@ body {
   background: var(--progress-fill);
   box-shadow: 0 0 4px rgba(255,126,51,0.6);
 }
-/* Нижняя половина */
+
+/* Нижняя часть: breakdown */
 .card-bottom {
   flex: 1;
   overflow-y: auto;
@@ -271,22 +270,18 @@ body {
   display: inline-block;
 }
 
-/* Стили для фразовых карточек */
-.card-back.phrase-mode .card-top,
-.card-back.phrase-mode .progress-dots,
-.card-back.phrase-mode .card-bottom {
-  display: none;
-}
+/* Фразовые карточки — центрированная версия */
 .card-back.phrase-mode {
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 20px;
+  text-align: center;
+  overflow-y: auto;
 }
 .card-back.phrase-mode .phrase-content {
-  text-align: center;
   width: 100%;
+  padding: 20px;
 }
 .card-back.phrase-mode .pinyin {
   font-size: 1.8rem;
@@ -355,7 +350,7 @@ body {
   border: 1.5px solid #1a66cc;
 }
 
-/* Анимации свайпа */
+/* Анимации */
 .card-wrapper.swipe-left .card {
   animation: swipeLeft 0.3s ease forwards;
 }
@@ -365,7 +360,6 @@ body {
 .card-wrapper.swipe-up .card {
   animation: swipeUp 0.3s ease forwards;
 }
-
 @keyframes swipeLeft {
   0% { transform: translateX(0) rotate(0deg); opacity: 1; }
   100% { transform: translateX(-120%) rotate(-12deg); opacity: 0; }
