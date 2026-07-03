@@ -1,108 +1,126 @@
+// ======================================================
+// ChinCards — стабильная версия (переписан с нуля)
+// ======================================================
+
+// ---------- Глобальные данные ----------
 let fullDictionary = [];
 let activeLevel = '12';
 let currentLanguage = 'ru';
-let wordProgress = new Map();   // successCount, dueDate
+
+// Прогресс слов: { successCount, dueDate (null или дата) }
+let wordProgress = new Map();
 let learnedIds = new Set();
-let activeDeck = [];            // массив ID слов в текущей колоде
+
+// Активная колода (всегда 20 слов)
+let activeDeck = [];
 let activeDeckIndex = 0;
 let currentCardId = null;
 let isFlipped = false;
+
+// Фразы
 let phrasesDatabase = [];
 let phraseStatus = new Map();
 let learnedPhrasesIds = new Set();
 let isPhraseOnlyMode = false;
+
+// Свайп
 let touchStartX = 0, touchStartY = 0;
 let isSwiping = false;
 const DECK_SIZE = 20;
 
-// ---------- Загрузка ----------
+// ---------- ЗАГРУЗКА ----------
 async function loadDictionary() {
   try {
     const res = await fetch('HSK14ruen.json');
     if (!res.ok) throw new Error('HSK14ruen.json not found');
     fullDictionary = await res.json();
     fullDictionary.forEach((w, i) => { if (!w.id) w.id = `w_${i}`; });
+
     const phrasesRes = await fetch('phrases.json');
     if (phrasesRes.ok) {
       const phrasesData = await phrasesRes.json();
       phrasesDatabase = phrasesData.map((p, i) => ({ ...p, id: p.id || `p_${i}`, isPhrase: true }));
     }
-    await loadSavedData();
-    // После загрузки данных восстанавливаем или создаём колоду
-    restoreOrInitLevel();
+
+    loadState();
+    restoreOrInitDeck();
+    initLevel(activeLevel);
   } catch(e) {
     console.error(e);
     alert('Ошибка загрузки базы');
   }
 }
 
-function loadSavedData() {
-  return new Promise((resolve) => {
-    try {
-      const savedLearned = localStorage.getItem('chincards_learned');
-      if (savedLearned) learnedIds = new Set(JSON.parse(savedLearned));
-      const savedProgress = localStorage.getItem('chincards_word_progress');
-      if (savedProgress) {
-        const parsed = JSON.parse(savedProgress);
-        for (let [id, data] of Object.entries(parsed)) {
-          wordProgress.set(id, { successCount: data.successCount, dueDate: data.dueDate ? new Date(data.dueDate) : null });
-        }
-      }
-      const savedPhraseStatus = localStorage.getItem('chincards_phrase_status');
-      if (savedPhraseStatus) {
-        const parsed = JSON.parse(savedPhraseStatus);
-        for (let item of parsed) phraseStatus.set(item.id, { level: item.level, returnDate: new Date(item.returnDate) });
-      }
-      const savedPhrasesLearned = localStorage.getItem('chincards_phrases_learned');
-      if (savedPhrasesLearned) learnedPhrasesIds = new Set(JSON.parse(savedPhrasesLearned));
-      
-      // Загружаем сохранённую активную колоду и индекс (если есть)
-      const savedDeck = localStorage.getItem('chincards_active_deck');
-      const savedIndex = localStorage.getItem('chincards_active_index');
-      const savedLevel = localStorage.getItem('chincards_active_level');
-      if (savedDeck && savedIndex && savedLevel === activeLevel) {
-        activeDeck = JSON.parse(savedDeck);
-        activeDeckIndex = parseInt(savedIndex, 10);
-        // Проверяем, что колода не пуста и что все слова существуют (фильтруем удалённые)
-        activeDeck = activeDeck.filter(id => fullDictionary.some(w => w.id === id));
-        if (activeDeckIndex >= activeDeck.length) activeDeckIndex = 0;
-      } else {
-        activeDeck = [];
-        activeDeckIndex = 0;
-      }
-      resolve();
-    } catch(e) { console.warn(e); resolve(); }
-  });
-}
-
-function saveDeckState() {
+// ---------- СОХРАНЕНИЕ / ЗАГРУЗКА СОСТОЯНИЯ ----------
+function saveState() {
+  localStorage.setItem('chincards_learned', JSON.stringify([...learnedIds]));
+  const progressObj = {};
+  for (let [id, data] of wordProgress.entries()) {
+    progressObj[id] = {
+      successCount: data.successCount,
+      dueDate: data.dueDate ? data.dueDate.toISOString() : null
+    };
+  }
+  localStorage.setItem('chincards_word_progress', JSON.stringify(progressObj));
+  localStorage.setItem('chincards_phrase_status', JSON.stringify(
+    Array.from(phraseStatus.entries()).map(([id, data]) => ({
+      id, level: data.level, returnDate: data.returnDate.toISOString()
+    }))
+  ));
+  localStorage.setItem('chincards_phrases_learned', JSON.stringify([...learnedPhrasesIds]));
   localStorage.setItem('chincards_active_deck', JSON.stringify(activeDeck));
   localStorage.setItem('chincards_active_index', activeDeckIndex);
   localStorage.setItem('chincards_active_level', activeLevel);
 }
 
-function saveAll() {
-  localStorage.setItem('chincards_learned', JSON.stringify([...learnedIds]));
-  const progressObj = {};
-  for (let [id, data] of wordProgress.entries()) {
-    progressObj[id] = { successCount: data.successCount, dueDate: data.dueDate ? data.dueDate.toISOString() : null };
-  }
-  localStorage.setItem('chincards_word_progress', JSON.stringify(progressObj));
-  const phraseStatusArray = Array.from(phraseStatus.entries()).map(([id, data]) => ({ id, level: data.level, returnDate: data.returnDate.toISOString() }));
-  localStorage.setItem('chincards_phrase_status', JSON.stringify(phraseStatusArray));
-  localStorage.setItem('chincards_phrases_learned', JSON.stringify([...learnedPhrasesIds]));
-  saveDeckState();
+function loadState() {
+  try {
+    const savedLearned = localStorage.getItem('chincards_learned');
+    if (savedLearned) learnedIds = new Set(JSON.parse(savedLearned));
+
+    const savedProgress = localStorage.getItem('chincards_word_progress');
+    if (savedProgress) {
+      const parsed = JSON.parse(savedProgress);
+      for (let [id, data] of Object.entries(parsed)) {
+        wordProgress.set(id, {
+          successCount: data.successCount,
+          dueDate: data.dueDate ? new Date(data.dueDate) : null
+        });
+      }
+    }
+
+    const savedPhraseStatus = localStorage.getItem('chincards_phrase_status');
+    if (savedPhraseStatus) {
+      const parsed = JSON.parse(savedPhraseStatus);
+      for (let item of parsed) phraseStatus.set(item.id, { level: item.level, returnDate: new Date(item.returnDate) });
+    }
+
+    const savedPhrasesLearned = localStorage.getItem('chincards_phrases_learned');
+    if (savedPhrasesLearned) learnedPhrasesIds = new Set(JSON.parse(savedPhrasesLearned));
+
+    const savedDeck = localStorage.getItem('chincards_active_deck');
+    const savedIndex = localStorage.getItem('chincards_active_index');
+    const savedLevel = localStorage.getItem('chincards_active_level');
+    if (savedDeck && savedIndex && savedLevel === activeLevel) {
+      activeDeck = JSON.parse(savedDeck);
+      activeDeckIndex = parseInt(savedIndex, 10);
+      activeDeck = activeDeck.filter(id => fullDictionary.some(w => w.id === id));
+      if (activeDeckIndex >= activeDeck.length) activeDeckIndex = 0;
+    } else {
+      activeDeck = [];
+      activeDeckIndex = 0;
+    }
+  } catch(e) { console.warn(e); }
 }
 
-// ---------- Работа со словами ----------
+// ---------- РАБОТА С КОЛОДОЙ ----------
 function getWordsForLevel(level) {
   if (level === '12') return fullDictionary.filter(w => w.level === 1 || w.level === 2);
   if (level === '3') return fullDictionary.filter(w => w.level === 3);
   return [];
 }
 
-// Слова, которые должны вернуться в ротацию (dueDate истёк)
-function getDueWordsFromPool() {
+function getDueWords() {
   const now = new Date();
   const due = [];
   for (let [id, progress] of wordProgress.entries()) {
@@ -113,8 +131,7 @@ function getDueWordsFromPool() {
   return due;
 }
 
-// Новые слова из HSK (ещё не в колоде и не на отсрочке)
-function getFreshHSKWords() {
+function getFreshWords() {
   const all = getWordsForLevel(activeLevel);
   const now = new Date();
   return all.filter(w => {
@@ -126,30 +143,29 @@ function getFreshHSKWords() {
   }).map(w => w.id);
 }
 
-// Заменить одно слово в колоде (вызывается после удаления)
-function replaceOneWordInDeck() {
-  // Сначала пытаемся взять слово из пула ожидания (истекшие dueDate)
-  let due = getDueWordsFromPool();
+function addOneWordToDeck() {
+  // Сначала пытаемся взять из due-пула (сбросив dueDate)
+  let due = getDueWords();
   if (due.length) {
     const newId = due[Math.floor(Math.random() * due.length)];
+    wordProgress.delete(newId); // слово возвращается в ротацию, dueDate сбрасывается
     activeDeck.push(newId);
-    console.log(`+ Замена: добавлено слово из пула ожидания ${getWordById(newId)?.hanzi}`);
+    console.log(`+ Добавлено слово из пула ожидания: ${getWordById(newId)?.hanzi}`);
     return;
   }
-  // Если нет — берём новое из HSK
-  let fresh = getFreshHSKWords();
+  // Иначе берём свежее
+  let fresh = getFreshWords();
   if (fresh.length) {
     const newId = fresh[Math.floor(Math.random() * fresh.length)];
     activeDeck.push(newId);
-    console.log(`+ Замена: добавлено новое слово ${getWordById(newId)?.hanzi}`);
+    console.log(`+ Добавлено новое слово: ${getWordById(newId)?.hanzi}`);
     return;
   }
-  console.log('! Нет слов для замены, колода будет меньше');
+  console.log('! Нет слов для добавления, колода будет меньше');
 }
 
-// Построить начальную колоду (только при первом запуске или смене уровня)
 function buildFreshDeck() {
-  let fresh = getFreshHSKWords();
+  let fresh = getFreshWords();
   if (!fresh.length) return [];
   const shuffled = [...fresh];
   for (let i = shuffled.length - 1; i > 0; i--) {
@@ -159,45 +175,39 @@ function buildFreshDeck() {
   return shuffled.slice(0, DECK_SIZE);
 }
 
-// Восстановить или инициализировать уровень
-function restoreOrInitLevel() {
+function restoreOrInitDeck() {
   if (activeDeck.length === 0) {
     activeDeck = buildFreshDeck();
     activeDeckIndex = 0;
-    console.log('🃏 Создана новая колода из', activeDeck.length, 'слов');
   } else {
-    console.log('🔄 Восстановлена колода из', activeDeck.length, 'слов');
-    // Очищаем колоду от слов, которые уже должны были вернуться из dueDate (но они уже в колоде — не нужно удалять)
-    // Просто убеждаемся, что все слова в колоде корректны
+    // Фильтруем мёртвые id и проверяем, что колода не пуста
     activeDeck = activeDeck.filter(id => fullDictionary.some(w => w.id === id));
+    if (activeDeck.length === 0) {
+      activeDeck = buildFreshDeck();
+      activeDeckIndex = 0;
+    }
   }
-  if (activeDeck.length === 0) activeDeck = buildFreshDeck();
   if (activeDeckIndex >= activeDeck.length) activeDeckIndex = 0;
-  updateStats();
-  loadNextCard();
-  saveDeckState();
+  saveState();
 }
 
+// ---------- ИНИЦИАЛИЗАЦИЯ УРОВНЕЙ ----------
 function initLevel(level) {
   if (level === 'phrase') {
     isPhraseOnlyMode = true;
-    const available = getAvailablePhrases();
-    currentCardId = available.length ? available[Math.floor(Math.random() * available.length)].id : null;
-    isFlipped = false;
-    document.getElementById('flashcard').classList.remove('flipped');
-    updateDisplay();
-    updateCardStyle();
+    loadNextCard();
     updateStats();
     return;
   }
   isPhraseOnlyMode = false;
-  activeLevel = level;
-  // При смене уровня сбрасываем старую колоду и создаём новую
-  activeDeck = buildFreshDeck();
-  activeDeckIndex = 0;
+  if (level !== activeLevel) {
+    activeLevel = level;
+    activeDeck = buildFreshDeck();
+    activeDeckIndex = 0;
+    saveState();
+  }
   updateStats();
   loadNextCard();
-  saveDeckState();
 }
 
 function getAvailablePhrases() {
@@ -220,6 +230,7 @@ function loadNextCard() {
     updateCardStyle();
     return;
   }
+
   if (!activeDeck.length) {
     currentCardId = null;
     updateDisplay();
@@ -232,7 +243,7 @@ function loadNextCard() {
   document.getElementById('flashcard').classList.remove('flipped');
   updateDisplay();
   updateCardStyle();
-  saveDeckState();  // сохраняем прогресс позиции
+  saveState();
 }
 
 function getWordById(id) {
@@ -244,7 +255,7 @@ function getCurrentCard() {
   return getWordById(currentCardId);
 }
 
-// ---------- Отрисовка ----------
+// ---------- ОТРИСОВКА ----------
 function renderHSKCard(card) {
   const translation = currentLanguage === 'ru' ? card.translations.rus : card.translations.eng;
   let breakdownHtml = '';
@@ -256,8 +267,8 @@ function renderHSKCard(card) {
     }
     breakdownHtml += '</div>';
   }
-  const progress = wordProgress.get(card.id);
-  const count = progress ? progress.successCount : 0;
+  const prog = wordProgress.get(card.id);
+  const count = prog ? prog.successCount : 0;
   let dotsHtml = '';
   for (let i = 0; i < 10; i++) {
     dotsHtml += `<div class="progress-dot ${i < count ? 'filled' : ''}"></div>`;
@@ -330,8 +341,9 @@ function updateCardStyle() {
     else if (lvl === 1) front.classList.add('phrase-darkblue'), back.classList.add('phrase-darkblue');
     else front.classList.add('phrase-navy'), back.classList.add('phrase-navy');
   } else {
+    // Жёлтый цвет, если есть прогресс (successCount > 0) и нет dueDate (слово активно в колоде)
     const prog = wordProgress.get(card.id);
-    if (prog && prog.dueDate && prog.dueDate > new Date()) {
+    if (prog && prog.successCount > 0 && !prog.dueDate) {
       front.classList.add('yellow');
       back.classList.add('yellow');
     }
@@ -345,7 +357,7 @@ function updateStats() {
   document.getElementById('totalLearned').innerText = learnedIds.size;
 }
 
-// ---------- Свайпы ----------
+// ---------- СВАЙПЫ ----------
 function onSwipeRight() { // ЗНАЮ
   const card = getCurrentCard();
   if (!card) return;
@@ -361,18 +373,20 @@ function onSwipeRight() { // ЗНАЮ
     } else {
       phraseStatus.set(card.id, { level: lvl + 1, returnDate: nextDate });
     }
-    saveAll();
+    saveState();
     initLevel('phrase');
     animateSwipe('right');
     return;
   }
+
+  // Увеличиваем прогресс
   let prog = wordProgress.get(card.id);
   if (!prog) prog = { successCount: 0, dueDate: null };
   prog.successCount++;
   if (prog.successCount >= 10) {
     learnedIds.add(card.id);
     wordProgress.delete(card.id);
-    console.log(`✅ Слово ${card.hanzi} полностью выучено!`);
+    console.log(`✅ Слово ${card.hanzi} выучено!`);
   } else {
     let days = prog.successCount * 2;
     if (days > 20) days = 20;
@@ -380,17 +394,19 @@ function onSwipeRight() { // ЗНАЮ
     due.setDate(due.getDate() + days);
     prog.dueDate = due;
     wordProgress.set(card.id, prog);
-    console.log(`📅 Слово ${card.hanzi} выпало на ${days} дней (прогресс ${prog.successCount}/10)`);
+    console.log(`📅 Слово ${card.hanzi} на отсрочку ${days} дней (${prog.successCount}/10)`);
   }
-  // Удаляем текущее слово из колоды
+
+  // Удаляем слово из колоды
   const idx = activeDeck.indexOf(card.id);
   if (idx !== -1) activeDeck.splice(idx, 1);
-  // Добавляем новое слово (с приоритетом dueDate)
-  replaceOneWordInDeck();
+  // Добавляем новое слово (приоритет due)
+  addOneWordToDeck();
   // Корректируем индекс
   if (activeDeckIndex > 0 && activeDeckIndex <= activeDeck.length) activeDeckIndex--;
   if (activeDeckIndex < 0) activeDeckIndex = 0;
-  saveAll();
+
+  saveState();
   updateStats();
   loadNextCard();
   animateSwipe('right');
@@ -401,38 +417,37 @@ function onSwipeLeft() { // НЕ ЗНАЮ
   if (!card) return;
   if (card.isPhrase) {
     phraseStatus.delete(card.id);
-    saveAll();
+    saveState();
     initLevel('phrase');
     animateSwipe('left');
     return;
   }
-  // Сбрасываем прогресс, но слово остаётся в колоде (не удаляем)
+  // Сбрасываем прогресс (удаляем из wordProgress), но слово остаётся в колоде
   wordProgress.delete(card.id);
   console.log(`🔄 Прогресс слова ${card.hanzi} сброшен`);
-  saveAll();
-  // Переходим к следующей карточке
+  saveState();
   loadNextCard();
   animateSwipe('left');
 }
 
-function onSwipeUp() { // ЗАМЕНИТЬ (исключить из ротации без изменения прогресса)
+function onSwipeUp() { // ЗАМЕНИТЬ (исключить из ротации)
   const card = getCurrentCard();
   if (!card) return;
   if (card.isPhrase) {
     phraseStatus.delete(card.id);
-    saveAll();
+    saveState();
     initLevel('phrase');
     animateSwipe('up');
     return;
   }
-  // Удаляем слово из колоды, сбрасываем его прогресс (как незнание)
+  // Удаляем слово из колоды и сбрасываем прогресс
   const idx = activeDeck.indexOf(card.id);
   if (idx !== -1) activeDeck.splice(idx, 1);
   wordProgress.delete(card.id);
-  replaceOneWordInDeck();
+  addOneWordToDeck();
   if (activeDeckIndex > 0 && activeDeckIndex <= activeDeck.length) activeDeckIndex--;
   if (activeDeckIndex < 0) activeDeckIndex = 0;
-  saveAll();
+  saveState();
   updateStats();
   loadNextCard();
   animateSwipe('up');
@@ -445,7 +460,7 @@ function animateSwipe(dir) {
   setTimeout(() => wrap.classList.remove(`swipe-${dir}`), 300);
 }
 
-// ---------- Озвучка и события ----------
+// ---------- ОЗВУЧКА ----------
 function speak(text) {
   if (!window.speechSynthesis) return;
   const utterance = new SpeechSynthesisUtterance(text);
@@ -462,12 +477,14 @@ function flipCard() {
   isFlipped = !isFlipped;
   if (isFlipped) {
     cardEl.classList.add('flipped');
-    speak(card.text || card.hanzi);
+    // Задержка перед озвучкой, чтобы звук не мешал анимации
+    setTimeout(() => speak(card.text || card.hanzi), 150);
   } else {
     cardEl.classList.remove('flipped');
   }
 }
 
+// ---------- ОБРАБОТЧИКИ СОБЫТИЙ ----------
 function setupTouch() {
   const wrap = document.querySelector('.card-wrapper');
   if (!wrap) return;
@@ -561,6 +578,7 @@ function setupLanguage() {
   });
 }
 
+// ---------- СТАРТ ----------
 document.addEventListener('DOMContentLoaded', () => {
   loadDictionary();
   setupLevels();
