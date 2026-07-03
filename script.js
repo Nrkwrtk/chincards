@@ -1,172 +1,168 @@
-// ======================================================
-// ChinCards — стабильная версия (переписан с нуля)
-// ======================================================
+// ==========================================
+// ChinCards — Ультрастабильная версия
+// Вся логика упрощена до предела
+// ==========================================
 
-// ---------- Глобальные данные ----------
-let fullDictionary = [];
+let dict = [];
 let activeLevel = '12';
-let currentLanguage = 'ru';
+let lang = 'ru';
 
-// Прогресс слов: { successCount, dueDate (null или дата) }
-let wordProgress = new Map();
-let learnedIds = new Set();
+// Для каждого слова: { success: 0-10, due: null или Date }
+let progress = new Map();
+let learned = new Set();
 
-// Активная колода (всегда 20 слов)
-let activeDeck = [];
-let activeDeckIndex = 0;
-let currentCardId = null;
-let isFlipped = false;
+let deck = [];           // 20 ID
+let deckIndex = 0;
+let currentId = null;
+let flipped = false;
 
-// Фразы
-let phrasesDatabase = [];
-let phraseStatus = new Map();
-let learnedPhrasesIds = new Set();
-let isPhraseOnlyMode = false;
+let phrases = [];
+let phraseProgress = new Map();
+let learnedPhrases = new Set();
+let phraseMode = false;
 
-// Свайп
-let touchStartX = 0, touchStartY = 0;
-let isSwiping = false;
+let touchX = 0, touchY = 0;
+let swiping = false;
 const DECK_SIZE = 20;
 
 // ---------- ЗАГРУЗКА ----------
-async function loadDictionary() {
+async function loadData() {
   try {
-    const res = await fetch('HSK14ruen.json');
-    if (!res.ok) throw new Error('HSK14ruen.json not found');
-    fullDictionary = await res.json();
-    fullDictionary.forEach((w, i) => { if (!w.id) w.id = `w_${i}`; });
+    const r1 = await fetch('HSK14ruen.json');
+    if (!r1.ok) throw new Error('HSK14ruen.json');
+    dict = await r1.json();
+    dict.forEach((w, i) => { if (!w.id) w.id = 'w_' + i; });
 
-    const phrasesRes = await fetch('phrases.json');
-    if (phrasesRes.ok) {
-      const phrasesData = await phrasesRes.json();
-      phrasesDatabase = phrasesData.map((p, i) => ({ ...p, id: p.id || `p_${i}`, isPhrase: true }));
+    const r2 = await fetch('phrases.json');
+    if (r2.ok) {
+      const data = await r2.json();
+      phrases = data.map((p, i) => ({ ...p, id: p.id || 'p_' + i, isPhrase: true }));
     }
 
-    loadState();
-    restoreOrInitDeck();
-    initLevel(activeLevel);
+    loadStorage();
+    restoreDeck();
+    renderLevel();
   } catch(e) {
     console.error(e);
-    alert('Ошибка загрузки базы');
+    alert('Ошибка загрузки');
   }
 }
 
-// ---------- СОХРАНЕНИЕ / ЗАГРУЗКА СОСТОЯНИЯ ----------
-function saveState() {
-  localStorage.setItem('chincards_learned', JSON.stringify([...learnedIds]));
-  const progressObj = {};
-  for (let [id, data] of wordProgress.entries()) {
-    progressObj[id] = {
-      successCount: data.successCount,
-      dueDate: data.dueDate ? data.dueDate.toISOString() : null
-    };
-  }
-  localStorage.setItem('chincards_word_progress', JSON.stringify(progressObj));
-  localStorage.setItem('chincards_phrase_status', JSON.stringify(
-    Array.from(phraseStatus.entries()).map(([id, data]) => ({
-      id, level: data.level, returnDate: data.returnDate.toISOString()
-    }))
-  ));
-  localStorage.setItem('chincards_phrases_learned', JSON.stringify([...learnedPhrasesIds]));
-  localStorage.setItem('chincards_active_deck', JSON.stringify(activeDeck));
-  localStorage.setItem('chincards_active_index', activeDeckIndex);
-  localStorage.setItem('chincards_active_level', activeLevel);
-}
-
-function loadState() {
+// ---------- ХРАНИЛИЩЕ ----------
+function loadStorage() {
   try {
-    const savedLearned = localStorage.getItem('chincards_learned');
-    if (savedLearned) learnedIds = new Set(JSON.parse(savedLearned));
+    const l = localStorage.getItem('chincards_learned');
+    if (l) learned = new Set(JSON.parse(l));
 
-    const savedProgress = localStorage.getItem('chincards_word_progress');
-    if (savedProgress) {
-      const parsed = JSON.parse(savedProgress);
+    const p = localStorage.getItem('chincards_progress');
+    if (p) {
+      const parsed = JSON.parse(p);
       for (let [id, data] of Object.entries(parsed)) {
-        wordProgress.set(id, {
-          successCount: data.successCount,
-          dueDate: data.dueDate ? new Date(data.dueDate) : null
+        progress.set(id, {
+          success: data.success,
+          due: data.due ? new Date(data.due) : null
         });
       }
     }
 
-    const savedPhraseStatus = localStorage.getItem('chincards_phrase_status');
-    if (savedPhraseStatus) {
-      const parsed = JSON.parse(savedPhraseStatus);
-      for (let item of parsed) phraseStatus.set(item.id, { level: item.level, returnDate: new Date(item.returnDate) });
+    const pl = localStorage.getItem('chincards_phrases_learned');
+    if (pl) learnedPhrases = new Set(JSON.parse(pl));
+
+    const pp = localStorage.getItem('chincards_phrase_progress');
+    if (pp) {
+      const parsed = JSON.parse(pp);
+      for (let [id, data] of Object.entries(parsed)) {
+        phraseProgress.set(id, { level: data.level, returnDate: data.returnDate ? new Date(data.returnDate) : null });
+      }
     }
 
-    const savedPhrasesLearned = localStorage.getItem('chincards_phrases_learned');
-    if (savedPhrasesLearned) learnedPhrasesIds = new Set(JSON.parse(savedPhrasesLearned));
-
-    const savedDeck = localStorage.getItem('chincards_active_deck');
-    const savedIndex = localStorage.getItem('chincards_active_index');
-    const savedLevel = localStorage.getItem('chincards_active_level');
+    const savedDeck = localStorage.getItem('chincards_deck');
+    const savedIndex = localStorage.getItem('chincards_index');
+    const savedLevel = localStorage.getItem('chincards_level');
     if (savedDeck && savedIndex && savedLevel === activeLevel) {
-      activeDeck = JSON.parse(savedDeck);
-      activeDeckIndex = parseInt(savedIndex, 10);
-      activeDeck = activeDeck.filter(id => fullDictionary.some(w => w.id === id));
-      if (activeDeckIndex >= activeDeck.length) activeDeckIndex = 0;
+      deck = JSON.parse(savedDeck);
+      deckIndex = parseInt(savedIndex, 10);
+      deck = deck.filter(id => dict.some(w => w.id === id));
+      if (deckIndex >= deck.length) deckIndex = 0;
     } else {
-      activeDeck = [];
-      activeDeckIndex = 0;
+      deck = [];
+      deckIndex = 0;
     }
   } catch(e) { console.warn(e); }
 }
 
-// ---------- РАБОТА С КОЛОДОЙ ----------
-function getWordsForLevel(level) {
-  if (level === '12') return fullDictionary.filter(w => w.level === 1 || w.level === 2);
-  if (level === '3') return fullDictionary.filter(w => w.level === 3);
+function saveAll() {
+  localStorage.setItem('chincards_learned', JSON.stringify([...learned]));
+
+  const progObj = {};
+  for (let [id, data] of progress.entries()) {
+    progObj[id] = { success: data.success, due: data.due ? data.due.toISOString() : null };
+  }
+  localStorage.setItem('chincards_progress', JSON.stringify(progObj));
+
+  localStorage.setItem('chincards_phrases_learned', JSON.stringify([...learnedPhrases]));
+
+  const ppObj = {};
+  for (let [id, data] of phraseProgress.entries()) {
+    ppObj[id] = { level: data.level, returnDate: data.returnDate ? data.returnDate.toISOString() : null };
+  }
+  localStorage.setItem('chincards_phrase_progress', JSON.stringify(ppObj));
+
+  localStorage.setItem('chincards_deck', JSON.stringify(deck));
+  localStorage.setItem('chincards_index', deckIndex);
+  localStorage.setItem('chincards_level', activeLevel);
+}
+
+// ---------- КОЛОДА ----------
+function getLevelWords() {
+  if (activeLevel === '12') return dict.filter(w => w.level === 1 || w.level === 2);
+  if (activeLevel === '3') return dict.filter(w => w.level === 3);
   return [];
 }
 
-function getDueWords() {
+function getFresh() {
   const now = new Date();
-  const due = [];
-  for (let [id, progress] of wordProgress.entries()) {
-    if (progress.dueDate && progress.dueDate <= now && !learnedIds.has(id)) {
-      due.push(id);
-    }
-  }
-  return due;
-}
-
-function getFreshWords() {
-  const all = getWordsForLevel(activeLevel);
-  const now = new Date();
-  return all.filter(w => {
-    if (learnedIds.has(w.id)) return false;
-    if (activeDeck.includes(w.id)) return false;
-    const prog = wordProgress.get(w.id);
-    if (prog && prog.dueDate && prog.dueDate > now) return false;
+  return getLevelWords().filter(w => {
+    if (learned.has(w.id)) return false;
+    if (deck.includes(w.id)) return false;
+    const p = progress.get(w.id);
+    if (p && p.due && p.due > now) return false;
     return true;
   }).map(w => w.id);
 }
 
-function addOneWordToDeck() {
-  // Сначала пытаемся взять из due-пула (сбросив dueDate)
-  let due = getDueWords();
+function getDue() {
+  const now = new Date();
+  const result = [];
+  for (let [id, p] of progress.entries()) {
+    if (p.due && p.due <= now && !learned.has(id) && !deck.includes(id)) {
+      result.push(id);
+    }
+  }
+  return result;
+}
+
+function addOne() {
+  const due = getDue();
   if (due.length) {
-    const newId = due[Math.floor(Math.random() * due.length)];
-    wordProgress.delete(newId); // слово возвращается в ротацию, dueDate сбрасывается
-    activeDeck.push(newId);
-    console.log(`+ Добавлено слово из пула ожидания: ${getWordById(newId)?.hanzi}`);
+    const id = due[Math.floor(Math.random() * due.length)];
+    // Слово вернулось — удаляем due
+    const p = progress.get(id);
+    if (p) p.due = null;
+    deck.push(id);
+    console.log('+ Из пула:', getWord(id)?.hanzi);
     return;
   }
-  // Иначе берём свежее
-  let fresh = getFreshWords();
+  const fresh = getFresh();
   if (fresh.length) {
-    const newId = fresh[Math.floor(Math.random() * fresh.length)];
-    activeDeck.push(newId);
-    console.log(`+ Добавлено новое слово: ${getWordById(newId)?.hanzi}`);
-    return;
+    const id = fresh[Math.floor(Math.random() * fresh.length)];
+    deck.push(id);
+    console.log('+ Новое:', getWord(id)?.hanzi);
   }
-  console.log('! Нет слов для добавления, колода будет меньше');
 }
 
 function buildFreshDeck() {
-  let fresh = getFreshWords();
-  if (!fresh.length) return [];
+  const fresh = getFresh();
   const shuffled = [...fresh];
   for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -175,175 +171,124 @@ function buildFreshDeck() {
   return shuffled.slice(0, DECK_SIZE);
 }
 
-function restoreOrInitDeck() {
-  if (activeDeck.length === 0) {
-    activeDeck = buildFreshDeck();
-    activeDeckIndex = 0;
+function restoreDeck() {
+  if (deck.length === 0) {
+    deck = buildFreshDeck();
+    deckIndex = 0;
   } else {
-    // Фильтруем мёртвые id и проверяем, что колода не пуста
-    activeDeck = activeDeck.filter(id => fullDictionary.some(w => w.id === id));
-    if (activeDeck.length === 0) {
-      activeDeck = buildFreshDeck();
-      activeDeckIndex = 0;
+    deck = deck.filter(id => dict.some(w => w.id === id));
+    if (deck.length === 0) {
+      deck = buildFreshDeck();
+      deckIndex = 0;
     }
+    if (deckIndex >= deck.length) deckIndex = 0;
   }
-  if (activeDeckIndex >= activeDeck.length) activeDeckIndex = 0;
-  saveState();
+  saveAll();
 }
 
-// ---------- ИНИЦИАЛИЗАЦИЯ УРОВНЕЙ ----------
-function initLevel(level) {
-  if (level === 'phrase') {
-    isPhraseOnlyMode = true;
-    loadNextCard();
-    updateStats();
-    return;
-  }
-  isPhraseOnlyMode = false;
-  if (level !== activeLevel) {
-    activeLevel = level;
-    activeDeck = buildFreshDeck();
-    activeDeckIndex = 0;
-    saveState();
-  }
-  updateStats();
-  loadNextCard();
+// ---------- ПОЛУЧЕНИЕ ДАННЫХ ----------
+function getWord(id) {
+  return dict.find(w => w.id === id);
+}
+
+function getCurrent() {
+  if (phraseMode) return phrases.find(p => p.id === currentId);
+  return getWord(currentId);
 }
 
 function getAvailablePhrases() {
   const now = new Date();
-  return phrasesDatabase.filter(p => {
-    if (learnedPhrasesIds.has(p.id)) return false;
-    const st = phraseStatus.get(p.id);
-    if (st && st.returnDate > now) return false;
+  return phrases.filter(p => {
+    if (learnedPhrases.has(p.id)) return false;
+    const pp = phraseProgress.get(p.id);
+    if (pp && pp.returnDate && pp.returnDate > now) return false;
     return true;
   });
 }
 
-function loadNextCard() {
-  if (isPhraseOnlyMode) {
-    const available = getAvailablePhrases();
-    currentCardId = available.length ? available[Math.floor(Math.random() * available.length)].id : null;
-    isFlipped = false;
-    document.getElementById('flashcard').classList.remove('flipped');
-    updateDisplay();
-    updateCardStyle();
-    return;
-  }
-
-  if (!activeDeck.length) {
-    currentCardId = null;
-    updateDisplay();
-    return;
-  }
-  if (activeDeckIndex >= activeDeck.length) activeDeckIndex = 0;
-  currentCardId = activeDeck[activeDeckIndex];
-  activeDeckIndex++;
-  isFlipped = false;
-  document.getElementById('flashcard').classList.remove('flipped');
-  updateDisplay();
-  updateCardStyle();
-  saveState();
-}
-
-function getWordById(id) {
-  return fullDictionary.find(w => w.id === id);
-}
-
-function getCurrentCard() {
-  if (isPhraseOnlyMode) return phrasesDatabase.find(p => p.id === currentCardId);
-  return getWordById(currentCardId);
-}
-
 // ---------- ОТРИСОВКА ----------
-function renderHSKCard(card) {
-  const translation = currentLanguage === 'ru' ? card.translations.rus : card.translations.eng;
-  let breakdownHtml = '';
-  if (card.breakdown && card.breakdown.length) {
-    breakdownHtml = '<div class="breakdown">';
-    for (let part of card.breakdown) {
-      const tr = currentLanguage === 'ru' ? part.translation_ru : part.translation_en;
-      breakdownHtml += `<div class="breakdown-item"><span class="breakdown-char">${part.char}</span> <span class="breakdown-pinyin">(${part.pinyin})</span> <span class="breakdown-translation">— ${tr}</span></div>`;
-    }
-    breakdownHtml += '</div>';
-  }
-  const prog = wordProgress.get(card.id);
-  const count = prog ? prog.successCount : 0;
-  let dotsHtml = '';
-  for (let i = 0; i < 10; i++) {
-    dotsHtml += `<div class="progress-dot ${i < count ? 'filled' : ''}"></div>`;
-  }
-  return `
-    <div class="card-top">
-      <div class="pinyin">${card.pinyin}</div>
-      <div class="meaning">${translation}</div>
-    </div>
-    <div class="progress-dots">${dotsHtml}</div>
-    <div class="card-bottom">
-      ${breakdownHtml}
-    </div>
-  `;
-}
+function renderCard() {
+  const card = getCurrent();
+  const back = document.getElementById('cardBack');
+  const frontChar = document.getElementById('chineseChar');
 
-function renderPhraseCard(card) {
-  const translation = currentLanguage === 'ru' ? card.translation_ru : card.translation_en;
-  let breakdownHtml = '';
-  if (card.breakdown && card.breakdown.length) {
-    breakdownHtml = '<div class="breakdown">';
-    for (let part of card.breakdown) {
-      const tr = currentLanguage === 'ru' ? part.translation_ru : part.translation_en;
-      breakdownHtml += `<div class="breakdown-item"><span class="breakdown-char">${part.char}</span> <span class="breakdown-pinyin">${part.pinyin}</span> <span class="breakdown-translation">${tr}</span></div>`;
-    }
-    breakdownHtml += '</div>';
-  }
-  return `
-    <div class="phrase-content">
-      <div class="pinyin">${card.pinyin}</div>
-      <div class="meaning">${translation}</div>
-      ${breakdownHtml}
-    </div>
-  `;
-}
-
-function updateDisplay() {
-  const card = getCurrentCard();
-  const backDiv = document.getElementById('cardBack');
   if (!card) {
-    document.getElementById('chineseChar').innerHTML = '🎉';
-    backDiv.innerHTML = '<div class="card-top"><div class="pinyin"></div><div class="meaning">Все слова выучены!</div></div>';
-    backDiv.classList.remove('phrase-mode');
+    frontChar.innerHTML = '🎉';
+    back.innerHTML = '<div class="card-top"><div class="pinyin"></div><div class="meaning">Всё выучено!</div></div>';
+    back.classList.remove('phrase-mode');
     return;
   }
-  document.getElementById('chineseChar').innerHTML = card.text || card.hanzi;
+
+  frontChar.innerHTML = card.text || card.hanzi;
+
   if (card.isPhrase) {
-    backDiv.classList.add('phrase-mode');
-    backDiv.innerHTML = renderPhraseCard(card);
+    back.classList.add('phrase-mode');
+    const tr = lang === 'ru' ? card.translation_ru : card.translation_en;
+    let bd = '';
+    if (card.breakdown && card.breakdown.length) {
+      bd = '<div class="breakdown">';
+      for (let part of card.breakdown) {
+        const t = lang === 'ru' ? part.translation_ru : part.translation_en;
+        bd += `<div class="breakdown-item"><span class="breakdown-char">${part.char}</span> <span class="breakdown-pinyin">${part.pinyin}</span> <span class="breakdown-translation">${t}</span></div>`;
+      }
+      bd += '</div>';
+    }
+    back.innerHTML = `
+      <div class="phrase-content">
+        <div class="pinyin">${card.pinyin}</div>
+        <div class="meaning">${tr}</div>
+        ${bd}
+      </div>
+    `;
   } else {
-    backDiv.classList.remove('phrase-mode');
-    backDiv.innerHTML = renderHSKCard(card);
+    back.classList.remove('phrase-mode');
+    const tr = lang === 'ru' ? card.translations.rus : card.translations.eng;
+    let bd = '';
+    if (card.breakdown && card.breakdown.length) {
+      bd = '<div class="breakdown">';
+      for (let part of card.breakdown) {
+        const t = lang === 'ru' ? part.translation_ru : part.translation_en;
+        bd += `<div class="breakdown-item"><span class="breakdown-char">${part.char}</span> <span class="breakdown-pinyin">(${part.pinyin})</span> <span class="breakdown-translation">— ${t}</span></div>`;
+      }
+      bd += '</div>';
+    }
+    const p = progress.get(card.id);
+    const succ = p ? p.success : 0;
+    let dots = '';
+    for (let i = 0; i < 10; i++) {
+      dots += `<div class="progress-dot ${i < succ ? 'filled' : ''}"></div>`;
+    }
+    back.innerHTML = `
+      <div class="card-top">
+        <div class="pinyin">${card.pinyin}</div>
+        <div class="meaning">${tr}</div>
+      </div>
+      <div class="progress-dots">${dots}</div>
+      <div class="card-bottom">${bd}</div>
+    `;
   }
-  updateCardStyle();
+  updateStyle();
 }
 
-function updateCardStyle() {
-  const cardEl = document.getElementById('flashcard');
-  if (!cardEl) return;
-  const front = cardEl.querySelector('.card-front');
-  const back = cardEl.querySelector('.card-back');
+function updateStyle() {
+  const el = document.getElementById('flashcard');
+  if (!el) return;
+  const front = el.querySelector('.card-front');
+  const back = el.querySelector('.card-back');
   front.classList.remove('yellow', 'red', 'phrase-blue', 'phrase-darkblue', 'phrase-navy');
   back.classList.remove('yellow', 'red', 'phrase-blue', 'phrase-darkblue', 'phrase-navy');
-  const card = getCurrentCard();
+
+  const card = getCurrent();
   if (!card) return;
   if (card.isPhrase) {
-    const st = phraseStatus.get(card.id);
-    const lvl = st ? st.level : 0;
+    const pp = phraseProgress.get(card.id);
+    const lvl = pp ? pp.level : 0;
     if (lvl === 0) front.classList.add('phrase-blue'), back.classList.add('phrase-blue');
     else if (lvl === 1) front.classList.add('phrase-darkblue'), back.classList.add('phrase-darkblue');
     else front.classList.add('phrase-navy'), back.classList.add('phrase-navy');
   } else {
-    // Жёлтый цвет, если есть прогресс (successCount > 0) и нет dueDate (слово активно в колоде)
-    const prog = wordProgress.get(card.id);
-    if (prog && prog.successCount > 0 && !prog.dueDate) {
+    const p = progress.get(card.id);
+    if (p && p.success > 0 && !p.due) {
       front.classList.add('yellow');
       back.classList.add('yellow');
     }
@@ -351,240 +296,257 @@ function updateCardStyle() {
 }
 
 function updateStats() {
-  const all = getWordsForLevel(activeLevel);
-  const left = all.filter(w => !learnedIds.has(w.id) && !wordProgress.get(w.id)?.dueDate).length;
+  const all = getLevelWords();
+  const left = all.filter(w => !learned.has(w.id) && !progress.get(w.id)?.due).length;
   document.getElementById('cardsLeft').innerText = left;
-  document.getElementById('totalLearned').innerText = learnedIds.size;
+  document.getElementById('totalLearned').innerText = learned.size;
+}
+
+// ---------- НАВИГАЦИЯ ----------
+function nextCard() {
+  if (phraseMode) {
+    const available = getAvailablePhrases();
+    currentId = available.length ? available[Math.floor(Math.random() * available.length)].id : null;
+    flipped = false;
+    document.getElementById('flashcard').classList.remove('flipped');
+    renderCard();
+    updateStats();
+    return;
+  }
+
+  if (!deck.length) {
+    currentId = null;
+    renderCard();
+    return;
+  }
+  if (deckIndex >= deck.length) deckIndex = 0;
+  currentId = deck[deckIndex];
+  deckIndex++;
+  flipped = false;
+  document.getElementById('flashcard').classList.remove('flipped');
+  renderCard();
+  updateStats();
+  saveAll();
+}
+
+function renderLevel() {
+  if (phraseMode) {
+    nextCard();
+    return;
+  }
+  // при переключении уровня перестраиваем колоду
+  deck = buildFreshDeck();
+  deckIndex = 0;
+  saveAll();
+  nextCard();
+}
+
+function initLevel(level) {
+  if (level === 'phrase') {
+    if (phraseMode) return;
+    phraseMode = true;
+    document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector('.level-btn.phrase-mode-btn')?.classList.add('active');
+    renderLevel();
+    return;
+  }
+  phraseMode = false;
+  if (level !== activeLevel) {
+    activeLevel = level;
+    deck = buildFreshDeck();
+    deckIndex = 0;
+    saveAll();
+  }
+  document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.level-btn[data-level="${level}"]`)?.classList.add('active');
+  renderLevel();
 }
 
 // ---------- СВАЙПЫ ----------
-function onSwipeRight() { // ЗНАЮ
-  const card = getCurrentCard();
+function onRight() {
+  const card = getCurrent();
   if (!card) return;
+
   if (card.isPhrase) {
-    const st = phraseStatus.get(card.id);
-    let lvl = st ? st.level : 0;
-    const nextDate = new Date();
-    if (lvl === 0) nextDate.setDate(nextDate.getDate() + 2);
-    else nextDate.setDate(nextDate.getDate() + 30);
+    const pp = phraseProgress.get(card.id);
+    let lvl = pp ? pp.level : 0;
+    const d = new Date();
+    if (lvl === 0) d.setDate(d.getDate() + 2);
+    else d.setDate(d.getDate() + 30);
     if (lvl === 2) {
-      learnedPhrasesIds.add(card.id);
-      phraseStatus.delete(card.id);
+      learnedPhrases.add(card.id);
+      phraseProgress.delete(card.id);
     } else {
-      phraseStatus.set(card.id, { level: lvl + 1, returnDate: nextDate });
+      phraseProgress.set(card.id, { level: lvl + 1, returnDate: d });
     }
-    saveState();
-    initLevel('phrase');
-    animateSwipe('right');
+    saveAll();
+    nextCard();
+    animate('right');
     return;
   }
 
-  // Увеличиваем прогресс
-  let prog = wordProgress.get(card.id);
-  if (!prog) prog = { successCount: 0, dueDate: null };
-  prog.successCount++;
-  if (prog.successCount >= 10) {
-    learnedIds.add(card.id);
-    wordProgress.delete(card.id);
-    console.log(`✅ Слово ${card.hanzi} выучено!`);
+  let p = progress.get(card.id);
+  if (!p) p = { success: 0, due: null };
+  p.success++;
+  if (p.success >= 10) {
+    learned.add(card.id);
+    progress.delete(card.id);
+    console.log('✅ Выучено:', card.hanzi);
   } else {
-    let days = prog.successCount * 2;
+    let days = p.success * 2;
     if (days > 20) days = 20;
-    const due = new Date();
-    due.setDate(due.getDate() + days);
-    prog.dueDate = due;
-    wordProgress.set(card.id, prog);
-    console.log(`📅 Слово ${card.hanzi} на отсрочку ${days} дней (${prog.successCount}/10)`);
+    const d = new Date();
+    d.setDate(d.getDate() + days);
+    p.due = d;
+    progress.set(card.id, p);
+    console.log('📅 Отсрочка', days, 'дней, прогресс', p.success, '/10');
   }
 
-  // Удаляем слово из колоды
-  const idx = activeDeck.indexOf(card.id);
-  if (idx !== -1) activeDeck.splice(idx, 1);
-  // Добавляем новое слово (приоритет due)
-  addOneWordToDeck();
-  // Корректируем индекс
-  if (activeDeckIndex > 0 && activeDeckIndex <= activeDeck.length) activeDeckIndex--;
-  if (activeDeckIndex < 0) activeDeckIndex = 0;
-
-  saveState();
-  updateStats();
-  loadNextCard();
-  animateSwipe('right');
+  const idx = deck.indexOf(card.id);
+  if (idx !== -1) deck.splice(idx, 1);
+  addOne();
+  if (deckIndex > 0 && deckIndex <= deck.length) deckIndex--;
+  if (deckIndex < 0) deckIndex = 0;
+  saveAll();
+  nextCard();
+  animate('right');
 }
 
-function onSwipeLeft() { // НЕ ЗНАЮ
-  const card = getCurrentCard();
+function onLeft() {
+  const card = getCurrent();
   if (!card) return;
   if (card.isPhrase) {
-    phraseStatus.delete(card.id);
-    saveState();
-    initLevel('phrase');
-    animateSwipe('left');
+    phraseProgress.delete(card.id);
+    saveAll();
+    nextCard();
+    animate('left');
     return;
   }
-  // Сбрасываем прогресс (удаляем из wordProgress), но слово остаётся в колоде
-  wordProgress.delete(card.id);
-  console.log(`🔄 Прогресс слова ${card.hanzi} сброшен`);
-  saveState();
-  loadNextCard();
-  animateSwipe('left');
+  progress.delete(card.id);
+  saveAll();
+  nextCard();
+  animate('left');
 }
 
-function onSwipeUp() { // ЗАМЕНИТЬ (исключить из ротации)
-  const card = getCurrentCard();
+function onUp() {
+  const card = getCurrent();
   if (!card) return;
   if (card.isPhrase) {
-    phraseStatus.delete(card.id);
-    saveState();
-    initLevel('phrase');
-    animateSwipe('up');
+    phraseProgress.delete(card.id);
+    saveAll();
+    nextCard();
+    animate('up');
     return;
   }
-  // Удаляем слово из колоды и сбрасываем прогресс
-  const idx = activeDeck.indexOf(card.id);
-  if (idx !== -1) activeDeck.splice(idx, 1);
-  wordProgress.delete(card.id);
-  addOneWordToDeck();
-  if (activeDeckIndex > 0 && activeDeckIndex <= activeDeck.length) activeDeckIndex--;
-  if (activeDeckIndex < 0) activeDeckIndex = 0;
-  saveState();
-  updateStats();
-  loadNextCard();
-  animateSwipe('up');
+  const idx = deck.indexOf(card.id);
+  if (idx !== -1) deck.splice(idx, 1);
+  progress.delete(card.id);
+  addOne();
+  if (deckIndex > 0 && deckIndex <= deck.length) deckIndex--;
+  if (deckIndex < 0) deckIndex = 0;
+  saveAll();
+  nextCard();
+  animate('up');
 }
 
-function animateSwipe(dir) {
+function animate(dir) {
   const wrap = document.querySelector('.card-wrapper');
   if (!wrap) return;
-  wrap.classList.add(`swipe-${dir}`);
-  setTimeout(() => wrap.classList.remove(`swipe-${dir}`), 300);
+  wrap.classList.add('swipe-' + dir);
+  setTimeout(() => wrap.classList.remove('swipe-' + dir), 300);
 }
 
-// ---------- ОЗВУЧКА ----------
-function speak(text) {
-  if (!window.speechSynthesis) return;
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = 'zh-CN';
-  utterance.rate = 0.85;
-  window.speechSynthesis.cancel();
-  window.speechSynthesis.speak(utterance);
-}
-
+// ---------- КЛИК И ОЗВУЧКА ----------
 function flipCard() {
-  const card = getCurrentCard();
+  const card = getCurrent();
   if (!card) return;
-  const cardEl = document.getElementById('flashcard');
-  isFlipped = !isFlipped;
-  if (isFlipped) {
-    cardEl.classList.add('flipped');
-    // Задержка перед озвучкой, чтобы звук не мешал анимации
-    setTimeout(() => speak(card.text || card.hanzi), 150);
+  const el = document.getElementById('flashcard');
+  flipped = !flipped;
+  if (flipped) {
+    el.classList.add('flipped');
+    speak(card.text || card.hanzi);
   } else {
-    cardEl.classList.remove('flipped');
+    el.classList.remove('flipped');
   }
 }
 
-// ---------- ОБРАБОТЧИКИ СОБЫТИЙ ----------
+function speak(text) {
+  if (!window.speechSynthesis) return;
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'zh-CN';
+  u.rate = 0.85;
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(u);
+}
+
+// ---------- СОБЫТИЯ ----------
 function setupTouch() {
   const wrap = document.querySelector('.card-wrapper');
   if (!wrap) return;
-  wrap.addEventListener('touchstart', (e) => {
-    touchStartX = e.touches[0].clientX;
-    touchStartY = e.touches[0].clientY;
-    isSwiping = true;
+  wrap.addEventListener('touchstart', e => {
+    touchX = e.touches[0].clientX;
+    touchY = e.touches[0].clientY;
+    swiping = true;
   }, { passive: false });
-  wrap.addEventListener('touchmove', (e) => {
-    if (!isSwiping) return;
-    const deltaX = Math.abs(e.touches[0].clientX - touchStartX);
-    const deltaY = Math.abs(e.touches[0].clientY - touchStartY);
-    if (deltaX > 10 || deltaY > 10) e.preventDefault();
+  wrap.addEventListener('touchmove', e => {
+    if (!swiping) return;
+    if (Math.abs(e.touches[0].clientX - touchX) > 10 ||
+        Math.abs(e.touches[0].clientY - touchY) > 10) e.preventDefault();
   }, { passive: false });
-  wrap.addEventListener('touchend', (e) => {
-    if (!isSwiping) return;
-    const deltaX = e.changedTouches[0].clientX - touchStartX;
-    const deltaY = e.changedTouches[0].clientY - touchStartY;
-    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
-      if (deltaX > 0) onSwipeRight();
-      else onSwipeLeft();
-    } else if (Math.abs(deltaY) > 50 && deltaY < 0) {
-      onSwipeUp();
+  wrap.addEventListener('touchend', e => {
+    if (!swiping) return;
+    const dx = e.changedTouches[0].clientX - touchX;
+    const dy = e.changedTouches[0].clientY - touchY;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
+      if (dx > 0) onRight();
+      else onLeft();
+    } else if (Math.abs(dy) > 50 && dy < 0) {
+      onUp();
     }
-    isSwiping = false;
+    swiping = false;
   });
-  let mouseX = 0, mouseY = 0;
-  wrap.addEventListener('mousedown', (e) => { mouseX = e.clientX; mouseY = e.clientY; isSwiping = true; });
-  wrap.addEventListener('mouseup', (e) => {
-    if (!isSwiping) return;
-    const deltaX = e.clientX - mouseX;
-    const deltaY = e.clientY - mouseY;
-    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
-      if (deltaX > 0) onSwipeRight();
-      else onSwipeLeft();
-    } else if (Math.abs(deltaY) > 50 && deltaY < 0) {
-      onSwipeUp();
+  let mx = 0, my = 0;
+  wrap.addEventListener('mousedown', e => { mx = e.clientX; my = e.clientY; swiping = true; });
+  wrap.addEventListener('mouseup', e => {
+    if (!swiping) return;
+    const dx = e.clientX - mx;
+    const dy = e.clientY - my;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
+      if (dx > 0) onRight();
+      else onLeft();
+    } else if (Math.abs(dy) > 50 && dy < 0) {
+      onUp();
     }
-    isSwiping = false;
+    swiping = false;
   });
 }
 
-function setupLevels() {
-  document.querySelectorAll('.level-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const val = btn.dataset.level;
-      if (val === 'phrase') {
-        if (isPhraseOnlyMode) return;
-        isPhraseOnlyMode = true;
-        document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        initLevel('phrase');
-      } else {
-        if (!isPhraseOnlyMode && val === activeLevel) return;
-        isPhraseOnlyMode = false;
-        activeLevel = val;
-        document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        initLevel(activeLevel);
-      }
+function setupUI() {
+  document.querySelectorAll('.level-btn').forEach(b => {
+    b.addEventListener('click', () => initLevel(b.dataset.level));
+  });
+  document.querySelectorAll('.lang-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      const newLang = b.dataset.lang;
+      if (newLang === lang) return;
+      lang = newLang;
+      document.querySelectorAll('.lang-btn').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      document.getElementById('leftLabel').innerText = lang === 'ru' ? 'осталось' : 'left';
+      document.getElementById('learnedLabel').innerText = lang === 'ru' ? 'выучено' : 'learned';
+      document.getElementById('hintLeft').innerText = lang === 'ru' ? 'Не знаю' : "Don't know";
+      document.getElementById('hintRight').innerText = lang === 'ru' ? 'Знаю' : 'Know';
+      document.getElementById('hintUp').innerText = lang === 'ru' ? 'Заменить' : 'Replace';
+      renderCard();
     });
   });
+  document.getElementById('flashcard').addEventListener('click', e => { e.stopPropagation(); flipCard(); });
 }
 
-function setupLanguage() {
-  document.querySelectorAll('.lang-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const lang = btn.dataset.lang;
-      if (lang === currentLanguage) return;
-      currentLanguage = lang;
-      document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      const leftLabel = document.getElementById('leftLabel');
-      const learnedLabel = document.getElementById('learnedLabel');
-      leftLabel.innerText = currentLanguage === 'ru' ? 'осталось' : 'left';
-      learnedLabel.innerText = currentLanguage === 'ru' ? 'выучено' : 'learned';
-      const hintLeft = document.getElementById('hintLeft');
-      const hintRight = document.getElementById('hintRight');
-      const hintUp = document.getElementById('hintUp');
-      if (currentLanguage === 'ru') {
-        hintLeft.innerText = 'Не знаю';
-        hintRight.innerText = 'Знаю';
-        hintUp.innerText = 'Заменить';
-      } else {
-        hintLeft.innerText = "Don't know";
-        hintRight.innerText = 'Know';
-        hintUp.innerText = 'Replace';
-      }
-      updateDisplay();
-    });
-  });
-}
-
-// ---------- СТАРТ ----------
 document.addEventListener('DOMContentLoaded', () => {
-  loadDictionary();
-  setupLevels();
-  setupLanguage();
+  loadData();
+  setupUI();
   setupTouch();
-  const card = document.getElementById('flashcard');
-  if (card) card.addEventListener('click', (e) => { e.stopPropagation(); flipCard(); });
+  // Прогрев speech
   if (window.speechSynthesis) window.speechSynthesis.speak(new SpeechSynthesisUtterance(''));
 });
