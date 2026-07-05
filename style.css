@@ -34,7 +34,6 @@ body {
   position: fixed;
   width: 100%;
   height: 100%;
-  /* Запрет поворота через CSS (дополнительная защита) */
   orientation: portrait;
 }
 
@@ -61,13 +60,7 @@ body {
   box-shadow: 0 8px 20px rgba(0,0,0,0.2);
 }
 
-.lang-switch {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  margin-bottom: 14px;
-}
-
+.lang-switch { display: flex; justify-content: center; gap: 12px; margin-bottom: 14px; }
 .lang-btn {
   background: rgba(255,255,255,0.08);
   border: none;
@@ -94,15 +87,8 @@ body {
   gap: 12px;
   flex-wrap: wrap;
 }
-.level-label {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--accent);
-}
-.level-switch {
-  display: flex;
-  gap: 10px;
-}
+.level-label { font-size: 18px; font-weight: 700; color: var(--accent); }
+.level-switch { display: flex; gap: 10px; }
 .level-btn {
   background: rgba(255,255,255,0.08);
   border: none;
@@ -124,10 +110,7 @@ body {
   color: white;
 }
 
-.stats-container {
-  display: flex;
-  gap: 12px;
-}
+.stats-container { display: flex; gap: 12px; }
 .stat-card {
   flex: 1;
   background: rgba(0,0,0,0.4);
@@ -135,15 +118,8 @@ body {
   padding: 8px 10px;
   text-align: center;
 }
-.stat-value {
-  font-size: 26px;
-  font-weight: 800;
-  color: var(--accent);
-}
-.stat-label {
-  font-size: 11px;
-  color: rgba(255,255,255,0.6);
-}
+.stat-value { font-size: 26px; font-weight: 800; color: var(--accent); }
+.stat-label { font-size: 11px; color: rgba(255,255,255,0.6); }
 
 .card-wrapper {
   perspective: 1200px;
@@ -163,9 +139,7 @@ body {
   cursor: pointer;
   border-radius: var(--border-radius-card);
 }
-.card.flipped {
-  transform: rotateY(180deg);
-}
+.card.flipped { transform: rotateY(180deg); }
 .card-front, .card-back {
   position: absolute;
   width: 100%;
@@ -303,7 +277,7 @@ body {
 .gesture-hints {
   display: flex;
   justify-content: center;
-  gap: 32px;
+  gap: 40px;
   margin-top: 16px;
   padding: 8px 16px;
   background: rgba(0,0,0,0.3);
@@ -326,36 +300,12 @@ body {
   letter-spacing: 0.3px;
 }
 
-/* Цвета */
-.card-front.yellow, .card-back.yellow {
-  background: linear-gradient(145deg, #3a2a1a, #4a3a1a);
-  border: 1.5px solid #ffaa33;
-}
-.card-front.red, .card-back.red {
-  background: linear-gradient(145deg, #3a1a1a, #4a2525);
-  border: 1.5px solid #ff5555;
-}
-.card-front.phrase-blue, .card-back.phrase-blue {
-  background: linear-gradient(145deg, #1a2a3a, #1a3a4a);
-}
-.card-front.phrase-darkblue, .card-back.phrase-darkblue {
-  background: linear-gradient(145deg, #0f2a3a, #0f3a4a);
-  border: 1.5px solid #3399ff;
-}
-.card-front.phrase-navy, .card-back.phrase-navy {
-  background: linear-gradient(145deg, #0a1a2a, #0a2a3a);
-  border: 1.5px solid #1a66cc;
-}
-
-/* Анимации — убраны тормоза, только transform */
+/* Анимации */
 .card-wrapper.swipe-left .card {
   animation: swipeLeft 0.25s ease forwards;
 }
 .card-wrapper.swipe-right .card {
   animation: swipeRight 0.25s ease forwards;
-}
-.card-wrapper.swipe-up .card {
-  animation: swipeUp 0.25s ease forwards;
 }
 @keyframes swipeLeft {
   0% { transform: translateX(0) rotate(0deg); opacity: 1; }
@@ -365,10 +315,6 @@ body {
   0% { transform: translateX(0) rotate(0deg); opacity: 1; }
   100% { transform: translateX(120%) rotate(10deg); opacity: 0; }
 }
-@keyframes swipeUp {
-  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-  100% { transform: translateY(-120%) rotate(-5deg); opacity: 0; }
-}
 
 @media (max-width: 480px) {
   .card-top .pinyin { font-size: 1.5rem; }
@@ -376,7 +322,7 @@ body {
   .breakdown-char { font-size: 1rem; }
   .breakdown-pinyin { font-size: 0.8rem; }
   .breakdown-translation { font-size: 0.75rem; }
-  .gesture-hints { gap: 20px; }
+  .gesture-hints { gap: 30px; }
   .gesture-arrow { font-size: 1rem; }
   .gesture-label { font-size: 0.65rem; }
 }
